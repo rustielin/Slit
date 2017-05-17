@@ -19,9 +19,13 @@ public class MenuState extends State {
         mPlayBtn = new Texture("play_filled.png");
     }
 
+
     @Override
     public void handleInput() {
-
+        if (Gdx.input.justTouched()) {
+            mGsm.set(new PlayState(mGsm));
+            dispose(); // get rid of sstuff not using anymore
+        }
     }
 
     @Override
