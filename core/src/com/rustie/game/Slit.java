@@ -2,6 +2,7 @@ package com.rustie.game;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.FPSLogger;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -14,33 +15,35 @@ public class Slit extends ApplicationAdapter {
 
 	public static final String TITLE = "Slit";
 
-    private GameStateManager mGsm;
+	private GameStateManager mGsm;
 
-    // only need 1
-    private SpriteBatch batch;
 
-    Texture img;
-	
+
+	// only need 1
+	private SpriteBatch batch;
+
+	Texture img;
+
 	@Override
-	public void create () {
+	public void create() {
 		this.batch = new SpriteBatch();
-        this.mGsm = new GameStateManager();
-        Gdx.gl.glClearColor(1, 0, 0, 1);
-        this.mGsm.push(new MenuState(mGsm));
+		this.mGsm = new GameStateManager();
+		Gdx.gl.glClearColor(1, 0, 0, 1);
+		this.mGsm.push(new MenuState(mGsm));
 	}
 
 	@Override
-	public void render () {
+	public void render() {
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-        this.mGsm.update(Gdx.graphics.getDeltaTime());
-        this.mGsm.render(batch);
+		this.mGsm.update(Gdx.graphics.getDeltaTime());
+		this.mGsm.render(batch);
 
-        batch.begin();
+		batch.begin();
 		batch.end();
 	}
-	
+
 	@Override
-	public void dispose () {
+	public void dispose() {
 		batch.dispose();
 		img.dispose();
 	}

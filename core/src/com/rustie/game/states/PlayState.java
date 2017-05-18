@@ -2,6 +2,7 @@ package com.rustie.game.states;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.graphics.FPSLogger;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
@@ -20,8 +21,11 @@ public class PlayState extends State {
     private Wave mWave;
     private Texture test;
 
+    private FPSLogger fpsLogger;
+
     protected PlayState(GameStateManager gsm) {
         super(gsm);
+        this.fpsLogger = new FPSLogger();
         this.mShapeRenderer = new ShapeRenderer();
         this.mPlayer = new Player(50, 50);
         this.mWave = new Wave(50, 100, 10, 5);
@@ -32,7 +36,6 @@ public class PlayState extends State {
     @Override
     protected void handleInput() {
 
-
     }
 
     @Override
@@ -41,6 +44,7 @@ public class PlayState extends State {
         handleInput();
         mWave.update(dt);
 
+        fpsLogger.log();
 
     }
 

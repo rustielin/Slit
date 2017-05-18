@@ -1,7 +1,9 @@
 package com.rustie.game.sprites;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Vector3;
 import com.rustie.game.Slit;
 
@@ -16,11 +18,17 @@ public class Wave {
     private int speedScale; // controls how fast the waves move
     private Pixmap mPixmap;
     private int radius;
+    private Circle mCircle;
+
 
     public Wave(int x, int y, int r, int speed) {
+        Gdx.gl.glLineWidth(32);
+        
         this.radius = r;
         this.mPosition = new Vector3(x, y, 0);
         this.speedScale = speed;
+        mCircle = new Circle(x, y, radius);
+
         makePixMap();
     }
 
@@ -30,12 +38,17 @@ public class Wave {
         mPixmap.setColor(0xffffffff);
         mPixmap.drawCircle(radius, radius, radius);
         mTexture = new Texture(mPixmap);
+
+        mCircle.setRadius(radius);
     }
 
     public void update(float dt) {
-        radius += speedScale;
-        dispose();
-        makePixMap();
+        if (mCircle.radius * 2 < Slit.HEIGHT || mCircle.radius < Slit.WIDTH) {
+            radius += speedScale;
+            dispose();
+            makePixMap();
+        }
+
     }
 
     public Vector3 getPosition() {
