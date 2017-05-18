@@ -17,6 +17,9 @@ public class Player  {
     private Pixmap mPixmap;
     private int radius;
 
+    // movement multiplier for slow
+    public static double SPEED_MULTIPLIER = 0.5;
+
     /**
      * Makes Player at starting position x,y
      * @param x
@@ -47,6 +50,10 @@ public class Player  {
 
     public Vector3 getPosition() {
         return this.mPosition;
+    }
+
+    public Vector3 getVelocity() {
+        return this.mVelocity;
     }
 
     public Texture getTexture() {

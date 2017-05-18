@@ -47,6 +47,7 @@ public class Wave {
             radius += speedScale;
             dispose();
             makePixMap();
+            System.out.println(dt);
         }
 
     }
