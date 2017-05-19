@@ -10,18 +10,21 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.physics.box2d.Box2D;
 import com.rustie.game.screens.PlayScreen;
-import com.rustie.game.states.GameStateManager;
-import com.rustie.game.states.MenuState;
+//import com.rustie.game.states.GameStateManager;
+//import com.rustie.game.states.MenuState;
 
 public class Slit extends Game {
     // virtual width and heights
 	public static final int WIDTH = 800;
 	public static final int HEIGHT = 600;
 
+    // pixels per meter
+    public static final float PPM = 100;
+
 	public static final String TITLE = "Slit";
     public static Application.ApplicationType APP_TYPE;
 
-	private GameStateManager mGsm;
+//	private GameStateManager mGsm;
 
 
 
