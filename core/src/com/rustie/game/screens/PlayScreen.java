@@ -1,51 +1,58 @@
-package com.rustie.game.states;
+package com.rustie.game.screens;
 
 import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
-import com.badlogic.gdx.graphics.FPSLogger;
+import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.rustie.game.utils.Controller;
+import com.badlogic.gdx.maps.tiled.TiledMap;
+import com.badlogic.gdx.maps.tiled.TmxMapLoader;
+import com.badlogic.gdx.maps.tiled.renderers.OrthoCachedTiledMapRenderer;
+import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
+import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.badlogic.gdx.utils.viewport.StretchViewport;
+import com.badlogic.gdx.utils.viewport.Viewport;
 import com.rustie.game.Slit;
-import com.rustie.game.sprites.Player;
-import com.rustie.game.sprites.Wave;
+import com.rustie.game.scenes.Hud;
+import com.rustie.game.utils.Controller;
 
 /**
- * Created by rustie on 5/15/17.
+ * Created by rustie on 5/18/17.
  */
 
-public class PlayState extends State {
-    private ShapeRenderer mShapeRenderer;
-    private Player mPlayer;
-    private Wave mWave;
-    private Texture test;
+public class PlayScreen implements Screen {
 
-    private FPSLogger fpsLogger;
-
+    private Slit mGame;
+    private OrthographicCamera mCam;
+    private Viewport mGamePort;
+    private Hud mHud;
     private Controller mController;
 
-    protected PlayState(GameStateManager gsm) {
-        super(gsm);
-        this.fpsLogger = new FPSLogger();
-        this.mShapeRenderer = new ShapeRenderer();
-        this.mPlayer = new Player(50, 50);
-        this.mWave = new Wave(50, 100, 10, 5);
-        test = new Texture("play_filled.png");
+    private TmxMapLoader mMapLoader;
+    private TiledMap mMap;
+    private OrthogonalTiledMapRenderer mRenderer;
 
-        mController = new Controller();
+
+    public PlayScreen(Slit game) {
+        this.mGame = game;
+        this.mCam = new OrthographicCamera();
+        this.mGamePort = new FitViewport(Slit.WIDTH, Slit.HEIGHT, mCam);
+        this.mHud = new Hud(mGame.mBatch);
+        this.mController = new Controller();
+
+        mMapLoader = new TmxMapLoader();
+        mMap = mMapLoader.load("level1.tmx");
+        mRenderer = new OrthogonalTiledMapRenderer(mMap);
+        mCam.position.set(mGamePort.getWorldWidth() / 2, mGamePort.getWorldHeight() / 2, 0);
 
     }
 
-    /**
-     * Handles input based on mobile / pc
-     */
-    @Override
-    protected void handleInput() {
-
-        double x = mPlayer.getVelocity().x;
-        double y = mPlayer.getVelocity().y;
+    public void handleInput(float dt) {
+//        double x = mPlayer.getVelocity().x;
+//        double y = mPlayer.getVelocity().y;
 
         // Handle mobile on screen buttons
         if (mController.isRightPressed()) {
@@ -82,6 +89,7 @@ public class PlayState extends State {
             } else {
                 // move normal
                 System.out.println("A/Left");
+                mCam.position.x += 100 * dt;
 
             }
         } else if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) || Gdx.input.isKeyPressed(Input.Keys.D)) {
@@ -104,42 +112,63 @@ public class PlayState extends State {
             }
         }
 
-
     }
 
-    private void normalize() {
-
-    }
-
-    @Override
     public void update(float dt) {
-        // check this first
-        handleInput();
-        mWave.update(dt);
-
-        fpsLogger.log();
+        handleInput(dt);
+        mCam.update();
+        mRenderer.setView(mCam);
 
     }
 
     @Override
-    public void render(SpriteBatch spriteBatch) {
-        spriteBatch.begin();
+    public void show() {
 
-        spriteBatch.draw(mPlayer.getTexture(), mPlayer.getPosition().x, mPlayer.getPosition().y);
-//        spriteBatch.draw(test, 50, 50);
-        spriteBatch.draw(mWave.getTexture(), mWave.getPosition().x, mWave.getPosition().y);
+    }
 
+    @Override
+    public void render(float delta) {
+        update(delta);
+
+        Gdx.gl.glClearColor(1, 0, 0, 1);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
+        // recognize where the camera is and only render that
+        mGame.mBatch.setProjectionMatrix(mHud.mStage.getCamera().combined);
+        mHud.mStage.draw();
 
         // only render the controller if needed
         if (Slit.APP_TYPE == Application.ApplicationType.Android || Slit.APP_TYPE == Application.ApplicationType.iOS) {
             mController.draw();
         }
 
-        spriteBatch.end();
+        mRenderer.render();
+
+    }
+
+    @Override
+    public void resize(int width, int height) {
+        mGamePort.update(width, height);
+
+    }
+
+    @Override
+    public void pause() {
+
+    }
+
+    @Override
+    public void resume() {
+
+    }
+
+    @Override
+    public void hide() {
+
     }
 
     @Override
     public void dispose() {
-        mPlayer.dispose();
+
     }
 }
