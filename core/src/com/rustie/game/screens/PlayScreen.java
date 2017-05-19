@@ -7,10 +7,20 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.maps.MapObject;
+import com.badlogic.gdx.maps.objects.RectangleMapObject;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.renderers.OrthoCachedTiledMapRenderer;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
+import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.physics.box2d.Body;
+import com.badlogic.gdx.physics.box2d.BodyDef;
+import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
+import com.badlogic.gdx.physics.box2d.FixtureDef;
+import com.badlogic.gdx.physics.box2d.PolygonShape;
+import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
@@ -35,6 +45,10 @@ public class PlayScreen implements Screen {
     private TiledMap mMap;
     private OrthogonalTiledMapRenderer mRenderer;
 
+    // box2d stuff
+    private World mWorld;
+    private Box2DDebugRenderer box2DDebugRenderer;
+
 
     public PlayScreen(Slit game) {
         this.mGame = game;
@@ -47,6 +61,44 @@ public class PlayScreen implements Screen {
         mMap = mMapLoader.load("level1.tmx");
         mRenderer = new OrthogonalTiledMapRenderer(mMap);
         mCam.position.set(mGamePort.getWorldWidth() / 2, mGamePort.getWorldHeight() / 2, 0);
+
+        mWorld = new World(new Vector2(0, 0), true); // no gravity, and sleep all objects at rest
+        box2DDebugRenderer = new Box2DDebugRenderer();
+
+        BodyDef bdef = new BodyDef();
+        PolygonShape shape = new PolygonShape();
+        FixtureDef fdef = new FixtureDef();
+        Body body;
+
+        // for each wall (by index in Tiled)
+        for (MapObject object : mMap.getLayers().get(3).getObjects().getByType(RectangleMapObject.class)) {
+            Rectangle rect = ((RectangleMapObject) object).getRectangle();
+
+            bdef.type = BodyDef.BodyType.StaticBody; // Static, Dynamic, Kinematic
+            bdef.position.set(rect.getX() + rect.getWidth() / 2, rect.getY() + rect.getHeight() / 2); // put a rect body
+
+            body = mWorld.createBody(bdef);
+
+            // define polygon shape
+            shape.setAsBox(rect.getWidth() / 2, rect.getHeight() / 2);
+            fdef.shape = shape;
+            body.createFixture(fdef);
+        }
+
+        // for each coin (by index in Tiled)
+        for (MapObject object : mMap.getLayers().get(2).getObjects().getByType(RectangleMapObject.class)) {
+            Rectangle rect = ((RectangleMapObject) object).getRectangle();
+
+            bdef.type = BodyDef.BodyType.StaticBody; // Static, Dynamic, Kinematic
+            bdef.position.set(rect.getX() + rect.getWidth() / 2, rect.getY() + rect.getHeight() / 2); // put a rect body
+
+            body = mWorld.createBody(bdef);
+
+            // define polygon shape
+            shape.setAsBox(rect.getWidth() / 2, rect.getHeight() / 2);
+            fdef.shape = shape;
+            body.createFixture(fdef);
+        }
 
     }
 
@@ -142,6 +194,8 @@ public class PlayScreen implements Screen {
             mController.draw();
         }
 
+        box2DDebugRenderer.render(mWorld, mCam.combined);
+        
         mRenderer.render();
 
     }
