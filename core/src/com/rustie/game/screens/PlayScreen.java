@@ -21,6 +21,9 @@ import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.World;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.Touchpad;
+import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
@@ -30,6 +33,7 @@ import com.rustie.game.scenes.Hud;
 import com.rustie.game.sprites.Player;
 import com.rustie.game.utils.B2WorldCreator;
 import com.rustie.game.utils.Controller;
+import com.rustie.game.utils.WorldContactListener;
 
 /**
  * Created by rustie on 5/18/17.
@@ -39,6 +43,7 @@ public class PlayScreen implements Screen {
 
     private static float MOVEMENT_SPEED = 1f;
     private static float SLOW_SPEED = 0.5f;
+
 
     private Slit mGame;
     private OrthographicCamera mCam;
@@ -59,6 +64,7 @@ public class PlayScreen implements Screen {
 
 
     public PlayScreen(Slit game) {
+
         this.mGame = game;
         this.mCam = new OrthographicCamera();
         this.mGamePort = new FitViewport(Slit.WIDTH / Slit.PPM, Slit.HEIGHT / Slit.PPM, mCam);
@@ -80,39 +86,17 @@ public class PlayScreen implements Screen {
         this.mPlayer = new Player(mWorld);
 
 
+        this.mWorld.setContactListener(new WorldContactListener());
+
     }
 
     /**
      * Checks on screen button input if device is mobile type
      * @param dt
      */
-    private void checkButtonInput(float dt) {
+    private void checkTouchpadInput(float dt) {
         // Handle mobile on screen buttons
-        if (mController.isRightPressed()) {
-            if (mController.isSlowPressed()) {
-                // move slower
-            } else {
-                // move normal
-            }
-        } else if (mController.isLeftPressed()) {
-            if (mController.isSlowPressed()) {
-                // move slower
-            } else {
-                // move normal
-            }
-        } else if (mController.isUpPressed()) {
-            if (mController.isSlowPressed()) {
-                // move slower
-            } else {
-                // move normal
-            }
-        } else if (mController.isDownPressed()) {
-            if (mController.isSlowPressed()) {
-                // move slower
-            } else {
-                // move normal
-            }
-        }
+        mPlayer.move(MOVEMENT_SPEED * mController.getTouchpadPercentX(), MOVEMENT_SPEED * mController.getTouchpadPercentY());
     }
 
     /**
@@ -169,9 +153,11 @@ public class PlayScreen implements Screen {
 
         // handle mobile
         if (Slit.IS_MOBILE) {
-            checkButtonInput(dt);
+            checkTouchpadInput(dt);
+//            System.out.println("checking touchpad");
         } else {
             checkKeyInput(dt);
+//            System.out.println("checking keys");
         }
     }
 
@@ -210,18 +196,16 @@ public class PlayScreen implements Screen {
         // render debug stuff
         box2DDebugRenderer.render(mWorld, mCam.combined);
 
-
-        // recognize where the camera is and only render that
-        mGame.mBatch.setProjectionMatrix(mHud.mStage.getCamera().combined);
-        mHud.mStage.draw();
-
         // only render the controller if needed
         if (Slit.APP_TYPE == Application.ApplicationType.Android || Slit.APP_TYPE == Application.ApplicationType.iOS) {
-            mController.draw();
+        mController.draw();
         }
 
 
 
+        // recognize where the camera is and only render that
+        mGame.mBatch.setProjectionMatrix(mHud.mStage.getCamera().combined);
+        mHud.mStage.draw();
 
     }
 
