@@ -23,6 +23,7 @@ public class Slit extends Game {
 
 	public static final String TITLE = "Slit";
     public static Application.ApplicationType APP_TYPE;
+	public static boolean IS_MOBILE;
 
 //	private GameStateManager mGsm;
 
@@ -38,7 +39,11 @@ public class Slit extends Game {
 		this.mBatch = new SpriteBatch();
 		setScreen(new PlayScreen(this));
 
-//		APP_TYPE = Gdx.app.getType();
+		APP_TYPE = Gdx.app.getType();
+		IS_MOBILE = APP_TYPE == Application.ApplicationType.Android ||
+				APP_TYPE == Application.ApplicationType.iOS;
+
+
 //		this.mGsm = new GameStateManager();
 //		Gdx.gl.glClearColor(1, 0, 0, 1);
 //		this.mGsm.push(new MenuState(mGsm));

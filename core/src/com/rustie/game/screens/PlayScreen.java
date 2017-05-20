@@ -28,6 +28,7 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 import com.rustie.game.Slit;
 import com.rustie.game.scenes.Hud;
 import com.rustie.game.sprites.Player;
+import com.rustie.game.utils.B2WorldCreator;
 import com.rustie.game.utils.Controller;
 
 /**
@@ -36,7 +37,7 @@ import com.rustie.game.utils.Controller;
 
 public class PlayScreen implements Screen {
 
-    private static float MOVEMENT_SPEED = 0.1f;
+    private static float MOVEMENT_SPEED = 1f;
     private static float SLOW_SPEED = 0.5f;
 
     private Slit mGame;
@@ -73,50 +74,19 @@ public class PlayScreen implements Screen {
         mWorld = new World(new Vector2(0, 0), true); // no gravity, and sleep all objects at rest
         box2DDebugRenderer = new Box2DDebugRenderer();
 
+        // create the world
+        new B2WorldCreator(mWorld, mMap);
 
         this.mPlayer = new Player(mWorld);
 
-        BodyDef bdef = new BodyDef();
-        PolygonShape shape = new PolygonShape();
-        FixtureDef fdef = new FixtureDef();
-        Body body;
-
-        // for each wall (by index in Tiled)
-        for (MapObject object : mMap.getLayers().get(3).getObjects().getByType(RectangleMapObject.class)) {
-            Rectangle rect = ((RectangleMapObject) object).getRectangle();
-
-            bdef.type = BodyDef.BodyType.StaticBody; // Static, Dynamic, Kinematic
-            bdef.position.set((rect.getX() + rect.getWidth() / 2) / Slit.PPM, (rect.getY() + rect.getHeight() / 2) / Slit.PPM); // put a rect body
-
-            body = mWorld.createBody(bdef);
-
-            // define polygon shape
-            shape.setAsBox(rect.getWidth() / 2 / Slit.PPM, rect.getHeight() / 2 / Slit.PPM);
-            fdef.shape = shape;
-            body.createFixture(fdef);
-        }
-
-        // for each coin (by index in Tiled)
-        for (MapObject object : mMap.getLayers().get(2).getObjects().getByType(RectangleMapObject.class)) {
-            Rectangle rect = ((RectangleMapObject) object).getRectangle();
-
-            bdef.type = BodyDef.BodyType.StaticBody; // Static, Dynamic, Kinematic
-            bdef.position.set((rect.getX() + rect.getWidth() / 2) / Slit.PPM, (rect.getY() + rect.getHeight() / 2) / Slit.PPM); // put a rect body
-
-            body = mWorld.createBody(bdef);
-
-            // define polygon shape
-            shape.setAsBox(rect.getWidth() / 2 / Slit.PPM, rect.getHeight() / 2 / Slit.PPM);
-            fdef.shape = shape;
-            body.createFixture(fdef);
-        }
 
     }
 
-    public void handleInput(float dt) {
-//        double x = mPlayer.getVelocity().x;
-//        double y = mPlayer.getVelocity().y;
-
+    /**
+     * Checks on screen button input if device is mobile type
+     * @param dt
+     */
+    private void checkButtonInput(float dt) {
         // Handle mobile on screen buttons
         if (mController.isRightPressed()) {
             if (mController.isSlowPressed()) {
@@ -143,54 +113,66 @@ public class PlayScreen implements Screen {
                 // move normal
             }
         }
+    }
+
+    /**
+     * Check arrow/WASD key input if device is not mobile type
+     * @param dt
+     */
+    private void checkKeyInput(float dt) {
 
         // Handle WASD and arrow keys
         if (Gdx.input.isKeyPressed(Input.Keys.LEFT) || Gdx.input.isKeyPressed(Input.Keys.A)) {
             if (Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT)) {
-                // move slower
-                System.out.println("A/Left + SHIFT_LEFT");
-                mPlayer.mB2Body.applyLinearImpulse(new Vector2(-MOVEMENT_SPEED * SLOW_SPEED, 0), mPlayer.mB2Body.getWorldCenter(), true);
-
+//                mPlayer.mB2Body.setLinearVelocity(-MOVEMENT_SPEED * SLOW_SPEED, mPlayer.mB2Body.getLinearVelocity().y);
+                mPlayer.move(-MOVEMENT_SPEED * SLOW_SPEED, mPlayer.mB2Body.getLinearVelocity().y);
             } else {
-                // move normal
-                System.out.println("A/Left");
-//                mCam.position.x += 100 * dt;
-                mPlayer.mB2Body.applyLinearImpulse(new Vector2(-MOVEMENT_SPEED, 0), mPlayer.mB2Body.getWorldCenter(), true);
-
+//                mPlayer.mB2Body.setLinearVelocity(-MOVEMENT_SPEED, mPlayer.mB2Body.getLinearVelocity().y);
+                mPlayer.move(-MOVEMENT_SPEED, mPlayer.mB2Body.getLinearVelocity().y);
             }
         } else if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) || Gdx.input.isKeyPressed(Input.Keys.D)) {
             if (Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT)) {
-                // move slower
-                mPlayer.mB2Body.applyLinearImpulse(new Vector2(MOVEMENT_SPEED * SLOW_SPEED, 0), mPlayer.mB2Body.getWorldCenter(), true);
+//                mPlayer.mB2Body.setLinearVelocity(MOVEMENT_SPEED * SLOW_SPEED, mPlayer.mB2Body.getLinearVelocity().y);
+                mPlayer.move(MOVEMENT_SPEED * SLOW_SPEED, mPlayer.mB2Body.getLinearVelocity().y);
 
             } else {
-                // move normal
-                mPlayer.mB2Body.applyLinearImpulse(new Vector2(MOVEMENT_SPEED, 0), mPlayer.mB2Body.getWorldCenter(), true);
-
+//                mPlayer.mB2Body.setLinearVelocity(MOVEMENT_SPEED, mPlayer.mB2Body.getLinearVelocity().y);
+                mPlayer.move(MOVEMENT_SPEED, mPlayer.mB2Body.getLinearVelocity().y);
             }
-        } else if (Gdx.input.isKeyPressed(Input.Keys.UP) || Gdx.input.isKeyPressed(Input.Keys.W)) {
+        } else {
+            mPlayer.mB2Body.setLinearVelocity(0, mPlayer.mB2Body.getLinearVelocity().y);
+        }
+
+        if (Gdx.input.isKeyPressed(Input.Keys.UP) || Gdx.input.isKeyPressed(Input.Keys.W)) {
             if (Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT)) {
-                // move slower
-                mPlayer.mB2Body.applyLinearImpulse(new Vector2(0, MOVEMENT_SPEED * SLOW_SPEED), mPlayer.mB2Body.getWorldCenter(), true);
+//                mPlayer.mB2Body.setLinearVelocity(mPlayer.mB2Body.getLinearVelocity().x, MOVEMENT_SPEED * SLOW_SPEED);
+                mPlayer.move(mPlayer.mB2Body.getLinearVelocity().x, MOVEMENT_SPEED * SLOW_SPEED);
 
             } else {
-                // move normal
-                mPlayer.mB2Body.applyLinearImpulse(new Vector2(0, MOVEMENT_SPEED), mPlayer.mB2Body.getWorldCenter(), true);
+//                mPlayer.mB2Body.setLinearVelocity(mPlayer.mB2Body.getLinearVelocity().x, MOVEMENT_SPEED);
+                mPlayer.move(mPlayer.mB2Body.getLinearVelocity().x, MOVEMENT_SPEED);
             }
         } else if (Gdx.input.isKeyPressed(Input.Keys.DOWN) || Gdx.input.isKeyPressed(Input.Keys.S)) {
             if (Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT)) {
-                // move slower
-                mPlayer.mB2Body.applyLinearImpulse(new Vector2(0, -MOVEMENT_SPEED * SLOW_SPEED), mPlayer.mB2Body.getWorldCenter(), true);
+//                mPlayer.mB2Body.setLinearVelocity(mPlayer.mB2Body.getLinearVelocity().x, -MOVEMENT_SPEED * SLOW_SPEED);
+                mPlayer.move(mPlayer.mB2Body.getLinearVelocity().x, -MOVEMENT_SPEED * SLOW_SPEED);
             } else {
-                // move normal
-                mPlayer.mB2Body.applyLinearImpulse(new Vector2(0, -MOVEMENT_SPEED), mPlayer.mB2Body.getWorldCenter(), true);
-
+//                mPlayer.mB2Body.setLinearVelocity(mPlayer.mB2Body.getLinearVelocity().x, -MOVEMENT_SPEED);
+                mPlayer.move(mPlayer.mB2Body.getLinearVelocity().x, -MOVEMENT_SPEED);
             }
         } else {
-            mPlayer.mB2Body.setLinearVelocity(0, 0);
+            mPlayer.mB2Body.setLinearVelocity(mPlayer.mB2Body.getLinearVelocity().x, 0);
         }
+    }
 
+    public void handleInput(float dt) {
 
+        // handle mobile
+        if (Slit.IS_MOBILE) {
+            checkButtonInput(dt);
+        } else {
+            checkKeyInput(dt);
+        }
     }
 
     public void update(float dt) {
@@ -266,6 +248,10 @@ public class PlayScreen implements Screen {
 
     @Override
     public void dispose() {
-
+        mMap.dispose();
+        mRenderer.dispose();
+        mWorld.dispose();
+        box2DDebugRenderer.dispose();
+        mHud.dispose();
     }
 }
