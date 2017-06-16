@@ -11,6 +11,7 @@ import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.World;
 import com.rustie.game.Slit;
 import com.rustie.game.sprites.Coin;
+import com.rustie.game.sprites.Wall;
 
 /**
  * Created by rustie on 5/19/17.
@@ -28,7 +29,7 @@ public class B2WorldCreator {
         for (MapObject object : tiledMap.getLayers().get(3).getObjects().getByType(RectangleMapObject.class)) {
             Rectangle rect = ((RectangleMapObject) object).getRectangle();
 
-            new Coin(world, tiledMap, rect);
+            new Wall(world, tiledMap, rect);
 
         }
 

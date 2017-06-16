@@ -4,9 +4,11 @@ import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g3d.environment.PointLight;
 import com.badlogic.gdx.maps.MapObject;
 import com.badlogic.gdx.maps.objects.RectangleMapObject;
 import com.badlogic.gdx.maps.tiled.TiledMap;
@@ -35,6 +37,8 @@ import com.rustie.game.utils.B2WorldCreator;
 import com.rustie.game.utils.Controller;
 import com.rustie.game.utils.WorldContactListener;
 
+import box2dLight.RayHandler;
+
 /**
  * Created by rustie on 5/18/17.
  */
@@ -60,7 +64,9 @@ public class PlayScreen implements Screen {
     private World mWorld;
     private Box2DDebugRenderer box2DDebugRenderer;
 
-
+    //box2dlight
+    private RayHandler mRayHandler;
+    private box2dLight.PointLight mPlayerLight;
 
 
     public PlayScreen(Slit game) {
@@ -72,12 +78,15 @@ public class PlayScreen implements Screen {
         this.mController = new Controller();
 
 
+
         mMapLoader = new TmxMapLoader();
         mMap = mMapLoader.load("level1.tmx");
         mRenderer = new OrthogonalTiledMapRenderer(mMap, 1/ Slit.PPM);
         mCam.position.set(mGamePort.getWorldWidth() / 2, mGamePort.getWorldHeight() / 2, 0);
 
         mWorld = new World(new Vector2(0, 0), true); // no gravity, and sleep all objects at rest
+
+
         box2DDebugRenderer = new Box2DDebugRenderer();
 
         // create the world
@@ -87,6 +96,12 @@ public class PlayScreen implements Screen {
 
 
         this.mWorld.setContactListener(new WorldContactListener());
+
+        this.mRayHandler = new RayHandler(mWorld);
+        mPlayerLight = new box2dLight.PointLight(mRayHandler, 100, Color.WHITE, 100, 32 / Slit.PPM, 32 / Slit.PPM);
+        mPlayerLight.attachToBody(mPlayer.mB2Body);
+
+
 
     }
 
@@ -169,6 +184,8 @@ public class PlayScreen implements Screen {
 
 //        mCam.position.x = mPlayer.mB2Body.getPosition().x; // lol fps mode
 
+        mRayHandler.update();
+
         // update after changes
         mCam.update();
 
@@ -198,7 +215,7 @@ public class PlayScreen implements Screen {
 
         // only render the controller if needed
         if (Slit.APP_TYPE == Application.ApplicationType.Android || Slit.APP_TYPE == Application.ApplicationType.iOS) {
-        mController.draw();
+            mController.draw();
         }
 
 
@@ -206,6 +223,8 @@ public class PlayScreen implements Screen {
         // recognize where the camera is and only render that
         mGame.mBatch.setProjectionMatrix(mHud.mStage.getCamera().combined);
         mHud.mStage.draw();
+
+        mRayHandler.render();
 
     }
 
@@ -232,10 +251,13 @@ public class PlayScreen implements Screen {
 
     @Override
     public void dispose() {
+        mRayHandler.dispose();
         mMap.dispose();
         mRenderer.dispose();
         mWorld.dispose();
         box2DDebugRenderer.dispose();
         mHud.dispose();
     }
+
+
 }

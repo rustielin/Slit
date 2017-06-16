@@ -39,6 +39,8 @@ public class Slit extends Game {
 		this.mBatch = new SpriteBatch();
 		setScreen(new PlayScreen(this));
 
+//		Gdx.app.setLogLevel(Application.LOG_DEBUG);
+
 		APP_TYPE = Gdx.app.getType();
 		IS_MOBILE = APP_TYPE == Application.ApplicationType.Android ||
 				APP_TYPE == Application.ApplicationType.iOS;
