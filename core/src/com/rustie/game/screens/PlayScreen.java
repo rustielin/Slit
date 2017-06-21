@@ -86,20 +86,24 @@ public class PlayScreen implements Screen {
 
         mWorld = new World(new Vector2(0, 0), true); // no gravity, and sleep all objects at rest
 
+        this.mPlayer = new Player(mWorld);
+
+
+        this.mRayHandler = new RayHandler(mWorld);
+        mPlayerLight = new box2dLight.PointLight(mRayHandler, 100, Color.WHITE, 5, 32 / Slit.PPM, 32 / Slit.PPM);
+        mPlayerLight.attachToBody(mPlayer.mB2Body);
+
+
 
         box2DDebugRenderer = new Box2DDebugRenderer();
 
         // create the world
         new B2WorldCreator(mWorld, mMap);
 
-        this.mPlayer = new Player(mWorld);
+
 
 
         this.mWorld.setContactListener(new WorldContactListener());
-
-        this.mRayHandler = new RayHandler(mWorld);
-        mPlayerLight = new box2dLight.PointLight(mRayHandler, 100, Color.WHITE, 100, 32 / Slit.PPM, 32 / Slit.PPM);
-        mPlayerLight.attachToBody(mPlayer.mB2Body);
 
 
 
@@ -212,6 +216,9 @@ public class PlayScreen implements Screen {
 
         // render debug stuff
         box2DDebugRenderer.render(mWorld, mCam.combined);
+
+        mRayHandler.setCombinedMatrix(mCam.combined);
+
 
         // only render the controller if needed
         if (Slit.APP_TYPE == Application.ApplicationType.Android || Slit.APP_TYPE == Application.ApplicationType.iOS) {
