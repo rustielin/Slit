@@ -24,7 +24,7 @@
 //
 //    private FPSLogger fpsLogger;
 //
-//    private Controller mController;
+//    private Controller controller;
 //
 //    protected PlayState(GameStateManager gsm) {
 //        super(gsm);
@@ -34,7 +34,7 @@
 //        this.mWave = new Wave(50, 100, 10, 5);
 //        test = new Texture("play_filled.png");
 //
-//        mController = new Controller();
+//        controller = new Controller();
 //
 //    }
 //
@@ -48,26 +48,26 @@
 //        double y = mPlayer.getVelocity().y;
 //
 //        // Handle mobile on screen buttons
-//        if (mController.isRightPressed()) {
-//            if (mController.isSlowPressed()) {
+//        if (controller.isRightPressed()) {
+//            if (controller.isSlowPressed()) {
 //                // move slower
 //            } else {
 //                // move normal
 //            }
-//        } else if (mController.isLeftPressed()) {
-//            if (mController.isSlowPressed()) {
+//        } else if (controller.isLeftPressed()) {
+//            if (controller.isSlowPressed()) {
 //                // move slower
 //            } else {
 //                // move normal
 //            }
-//        } else if (mController.isUpPressed()) {
-//            if (mController.isSlowPressed()) {
+//        } else if (controller.isUpPressed()) {
+//            if (controller.isSlowPressed()) {
 //                // move slower
 //            } else {
 //                // move normal
 //            }
-//        } else if (mController.isDownPressed()) {
-//            if (mController.isSlowPressed()) {
+//        } else if (controller.isDownPressed()) {
+//            if (controller.isSlowPressed()) {
 //                // move slower
 //            } else {
 //                // move normal
@@ -132,7 +132,7 @@
 //
 //        // only render the controller if needed
 //        if (Slit.APP_TYPE == Application.ApplicationType.Android || Slit.APP_TYPE == Application.ApplicationType.iOS) {
-//            mController.draw();
+//            controller.draw();
 //        }
 //
 //        spriteBatch.end();

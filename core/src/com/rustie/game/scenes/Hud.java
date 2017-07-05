@@ -4,14 +4,15 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
-import com.badlogic.gdx.scenes.scene2d.utils.Disableable;
 import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.rustie.game.Slit;
+import com.rustie.game.utils.Controller;
 
 /**
  * Created by rustie on 5/18/17.
@@ -23,9 +24,10 @@ public class Hud implements Disposable{
     public Stage mStage;
     private Viewport mViewport;
 
-    private Integer worldTimer;
-    private float timeCount;
-    private Integer score;
+    private int startingSec;
+    private int timeInSec;
+
+    public Controller controller;
 
     Label mCountdownLabel;
     Label mScoreLabel;
@@ -34,10 +36,11 @@ public class Hud implements Disposable{
     Label mLevelNameLabel;
     Label mScoreNameLabel;
 
-    public Hud(SpriteBatch spriteBatch) {
-        worldTimer = 300;
-        timeCount = 0;
-        score = 0;
+    public Hud(SpriteBatch spriteBatch, World world) {
+        startingSec =  (int) (System.currentTimeMillis() / 1000);
+        timeInSec = 0;
+
+        controller = new Controller(spriteBatch, world);
 
         mViewport = new FitViewport(Slit.WIDTH, Slit.HEIGHT, new OrthographicCamera());
         mStage = new Stage(mViewport, spriteBatch);
@@ -46,8 +49,8 @@ public class Hud implements Disposable{
         table.top();
         table.setFillParent(true);
 
-        mCountdownLabel = new Label(String.format("%03d", worldTimer), new Label.LabelStyle(new BitmapFont(), Color.WHITE));
-        mScoreLabel = new Label(String.format("%06d", score), new Label.LabelStyle(new BitmapFont(), Color.WHITE));
+        mCountdownLabel = new Label(String.format("%03d", timeInSec), new Label.LabelStyle(new BitmapFont(), Color.WHITE));
+        mScoreLabel = new Label(String.format("%06d", Slit.SCORE), new Label.LabelStyle(new BitmapFont(), Color.WHITE));
         mScoreNameLabel = new Label("SCORE", new Label.LabelStyle(new BitmapFont(), Color.WHITE));
         mLevelNameLabel= new Label("LEVEL", new Label.LabelStyle(new BitmapFont(), Color.WHITE));
         mTimeLabel = new Label("TIME", new Label.LabelStyle(new BitmapFont(), Color.WHITE));
@@ -56,6 +59,8 @@ public class Hud implements Disposable{
         table.add(mScoreNameLabel).expandX().padTop(padding);
         table.add(mLevelNameLabel).expandX().padTop(padding);
         table.add(mTimeLabel).expandX().padTop(padding);
+
+        // second row
         table.row();
         table.add(mScoreLabel).expandX();
         table.add(mLevelLabel).expandX();
@@ -68,4 +73,12 @@ public class Hud implements Disposable{
     public void dispose() {
         mStage.dispose();
     }
+
+    public void update() {
+        timeInSec = (int) (System.currentTimeMillis() / 1000) - startingSec;
+        mCountdownLabel.setText(String.format("%03d", timeInSec));
+        mScoreLabel.setText(String.format("%06d", Slit.SCORE));
+    }
+
+
 }

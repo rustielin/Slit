@@ -3,38 +3,25 @@ package com.rustie.game.screens;
 import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
-import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g3d.environment.PointLight;
-import com.badlogic.gdx.maps.MapObject;
-import com.badlogic.gdx.maps.objects.RectangleMapObject;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
-import com.badlogic.gdx.maps.tiled.renderers.OrthoCachedTiledMapRenderer;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
-import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.physics.box2d.Body;
-import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
-import com.badlogic.gdx.physics.box2d.FixtureDef;
-import com.badlogic.gdx.physics.box2d.PolygonShape;
+import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.World;
-import com.badlogic.gdx.scenes.scene2d.ui.Skin;
-import com.badlogic.gdx.scenes.scene2d.ui.Touchpad;
-import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
+import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.FitViewport;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
-import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.rustie.game.Slit;
 import com.rustie.game.scenes.Hud;
+import com.rustie.game.sprites.Coin;
 import com.rustie.game.sprites.Player;
+import com.rustie.game.sprites.Wall;
 import com.rustie.game.utils.B2WorldCreator;
-import com.rustie.game.utils.Controller;
+import com.rustie.game.utils.PulsatingLight;
 import com.rustie.game.utils.WorldContactListener;
 
 import box2dLight.RayHandler;
@@ -43,17 +30,17 @@ import box2dLight.RayHandler;
  * Created by rustie on 5/18/17.
  */
 
-public class PlayScreen implements Screen {
+public class PlayScreen extends GameScreen {
+
+    public static final String TAG = "PlayScreen";
 
     private static float MOVEMENT_SPEED = 1f;
     private static float SLOW_SPEED = 0.5f;
 
 
     private Slit mGame;
-    private OrthographicCamera mCam;
     private Viewport mGamePort;
     private Hud mHud;
-    private Controller mController;
     private Player mPlayer;
 
     private TmxMapLoader mMapLoader;
@@ -65,23 +52,33 @@ public class PlayScreen implements Screen {
     private Box2DDebugRenderer box2DDebugRenderer;
 
     //box2dlight
-    private RayHandler mRayHandler;
+    public RayHandler mRayHandler;
     private box2dLight.PointLight mPlayerLight;
+    private float playerLightDistance = 2;
+    private int playerLightDirection = 1;
+
+    // sweeping
+    Array<Fixture> mFixtureArray;
+    PulsatingLight mPlayerPulse;
 
 
-    public PlayScreen(Slit game) {
+    public PlayScreen(GameScreenManager gsm, Slit game, String level) {
+        super(gsm);
+
+        Gdx.app.log(TAG, "ENTER");
 
         this.mGame = game;
-        this.mCam = new OrthographicCamera();
         this.mGamePort = new FitViewport(Slit.WIDTH / Slit.PPM, Slit.HEIGHT / Slit.PPM, mCam);
-        this.mHud = new Hud(mGame.mBatch);
-        this.mController = new Controller();
 
+        mFixtureArray = new Array<Fixture>();
 
 
         mMapLoader = new TmxMapLoader();
-        mMap = mMapLoader.load("level1.tmx");
+        mMap = mMapLoader.load(level);
         mRenderer = new OrthogonalTiledMapRenderer(mMap, 1/ Slit.PPM);
+
+        Gdx.app.log(TAG, "" + mCam);
+
         mCam.position.set(mGamePort.getWorldWidth() / 2, mGamePort.getWorldHeight() / 2, 0);
 
         mWorld = new World(new Vector2(0, 0), true); // no gravity, and sleep all objects at rest
@@ -90,22 +87,21 @@ public class PlayScreen implements Screen {
 
 
         this.mRayHandler = new RayHandler(mWorld);
-        mPlayerLight = new box2dLight.PointLight(mRayHandler, 100, Color.WHITE, 5, 32 / Slit.PPM, 32 / Slit.PPM);
+        mPlayerLight = new box2dLight.PointLight(mRayHandler, 100, Color.WHITE, playerLightDistance, 32 / Slit.PPM, 32 / Slit.PPM);
+        mPlayerLight.setSoftnessLength(0f);
         mPlayerLight.attachToBody(mPlayer.mB2Body);
-
+        mPlayerPulse = new PulsatingLight(mPlayerLight, 0, 2, 1, 1, true);
 
 
         box2DDebugRenderer = new Box2DDebugRenderer();
 
         // create the world
-        new B2WorldCreator(mWorld, mMap);
+        B2WorldCreator creator = new B2WorldCreator(mWorld, mMap, mRayHandler);
+        // do something with it?
 
-
-
+        this.mHud = new Hud(mGame.mBatch, mWorld);
 
         this.mWorld.setContactListener(new WorldContactListener());
-
-
 
     }
 
@@ -115,7 +111,8 @@ public class PlayScreen implements Screen {
      */
     private void checkTouchpadInput(float dt) {
         // Handle mobile on screen buttons
-        mPlayer.move(MOVEMENT_SPEED * mController.getTouchpadPercentX(), MOVEMENT_SPEED * mController.getTouchpadPercentY());
+        mPlayer.move(MOVEMENT_SPEED * mHud.controller.getTouchpadPercentX(), MOVEMENT_SPEED * mHud.controller.getTouchpadPercentY());
+//        mPlayer.move(MOVEMENT_SPEED * Gdx.input.getAccelerometerY(), -1 * MOVEMENT_SPEED * Gdx.input.getAccelerometerX());
     }
 
     /**
@@ -127,19 +124,15 @@ public class PlayScreen implements Screen {
         // Handle WASD and arrow keys
         if (Gdx.input.isKeyPressed(Input.Keys.LEFT) || Gdx.input.isKeyPressed(Input.Keys.A)) {
             if (Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT)) {
-//                mPlayer.mB2Body.setLinearVelocity(-MOVEMENT_SPEED * SLOW_SPEED, mPlayer.mB2Body.getLinearVelocity().y);
                 mPlayer.move(-MOVEMENT_SPEED * SLOW_SPEED, mPlayer.mB2Body.getLinearVelocity().y);
             } else {
-//                mPlayer.mB2Body.setLinearVelocity(-MOVEMENT_SPEED, mPlayer.mB2Body.getLinearVelocity().y);
                 mPlayer.move(-MOVEMENT_SPEED, mPlayer.mB2Body.getLinearVelocity().y);
             }
         } else if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) || Gdx.input.isKeyPressed(Input.Keys.D)) {
             if (Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT)) {
-//                mPlayer.mB2Body.setLinearVelocity(MOVEMENT_SPEED * SLOW_SPEED, mPlayer.mB2Body.getLinearVelocity().y);
                 mPlayer.move(MOVEMENT_SPEED * SLOW_SPEED, mPlayer.mB2Body.getLinearVelocity().y);
 
             } else {
-//                mPlayer.mB2Body.setLinearVelocity(MOVEMENT_SPEED, mPlayer.mB2Body.getLinearVelocity().y);
                 mPlayer.move(MOVEMENT_SPEED, mPlayer.mB2Body.getLinearVelocity().y);
             }
         } else {
@@ -148,19 +141,15 @@ public class PlayScreen implements Screen {
 
         if (Gdx.input.isKeyPressed(Input.Keys.UP) || Gdx.input.isKeyPressed(Input.Keys.W)) {
             if (Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT)) {
-//                mPlayer.mB2Body.setLinearVelocity(mPlayer.mB2Body.getLinearVelocity().x, MOVEMENT_SPEED * SLOW_SPEED);
                 mPlayer.move(mPlayer.mB2Body.getLinearVelocity().x, MOVEMENT_SPEED * SLOW_SPEED);
 
             } else {
-//                mPlayer.mB2Body.setLinearVelocity(mPlayer.mB2Body.getLinearVelocity().x, MOVEMENT_SPEED);
                 mPlayer.move(mPlayer.mB2Body.getLinearVelocity().x, MOVEMENT_SPEED);
             }
         } else if (Gdx.input.isKeyPressed(Input.Keys.DOWN) || Gdx.input.isKeyPressed(Input.Keys.S)) {
             if (Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT)) {
-//                mPlayer.mB2Body.setLinearVelocity(mPlayer.mB2Body.getLinearVelocity().x, -MOVEMENT_SPEED * SLOW_SPEED);
                 mPlayer.move(mPlayer.mB2Body.getLinearVelocity().x, -MOVEMENT_SPEED * SLOW_SPEED);
             } else {
-//                mPlayer.mB2Body.setLinearVelocity(mPlayer.mB2Body.getLinearVelocity().x, -MOVEMENT_SPEED);
                 mPlayer.move(mPlayer.mB2Body.getLinearVelocity().x, -MOVEMENT_SPEED);
             }
         } else {
@@ -173,10 +162,10 @@ public class PlayScreen implements Screen {
         // handle mobile
         if (Slit.IS_MOBILE) {
             checkTouchpadInput(dt);
-//            System.out.println("checking touchpad");
         } else {
             checkKeyInput(dt);
-//            System.out.println("checking keys");
+//            checkTouchpadInput(dt);
+
         }
     }
 
@@ -186,12 +175,23 @@ public class PlayScreen implements Screen {
 
         mWorld.step(1 / 60f, 6, 2); // 60 Hz
 
-//        mCam.position.x = mPlayer.mB2Body.getPosition().x; // lol fps mode
+        mCam.position.x = mPlayer.mB2Body.getPosition().x; // lol fps mode
+        mCam.position.y = mPlayer.mB2Body.getPosition().y;
+
+
+        // sweep dead stuff
+//        sweepDeadFixtures();
 
         mRayHandler.update();
 
+        mPlayerPulse.update(dt);
+
+        //sweep all updates
+        sweepFixtureUpdates(dt);
+
         // update after changes
         mCam.update();
+        mHud.update();
 
         // render only what we can see
         mRenderer.setView(mCam);
@@ -217,21 +217,19 @@ public class PlayScreen implements Screen {
         // render debug stuff
         box2DDebugRenderer.render(mWorld, mCam.combined);
 
+        // correct projection
         mRayHandler.setCombinedMatrix(mCam.combined);
-
-
-        // only render the controller if needed
-        if (Slit.APP_TYPE == Application.ApplicationType.Android || Slit.APP_TYPE == Application.ApplicationType.iOS) {
-            mController.draw();
-        }
-
+        mRayHandler.render();
 
 
         // recognize where the camera is and only render that
         mGame.mBatch.setProjectionMatrix(mHud.mStage.getCamera().combined);
         mHud.mStage.draw();
 
-        mRayHandler.render();
+        // only render the controller if needed
+        if (Slit.APP_TYPE == Application.ApplicationType.Android || Slit.APP_TYPE == Application.ApplicationType.iOS) {
+            mHud.controller.draw();
+        }
 
     }
 
@@ -266,5 +264,20 @@ public class PlayScreen implements Screen {
         mHud.dispose();
     }
 
+
+    public void sweepFixtureUpdates(float dt) {
+        mWorld.getFixtures(mFixtureArray);
+        Object userData;
+        for (Fixture f : mFixtureArray) {
+            userData = f.getUserData();
+            if (userData instanceof Coin && ((Coin) userData).mPulsatingLight != null) {
+                ((Coin) userData).update(dt);
+//                Gdx.app.log(TAG, "COIN UPDATE");
+            } else if (userData instanceof Wall && ((Wall) userData).mPulsatingLight != null) {
+                ((Wall) userData).update(dt);
+//                Gdx.app.log(TAG, "WALL UPDATE");
+            }
+        }
+    }
 
 }

@@ -9,14 +9,16 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.physics.box2d.Box2D;
+import com.rustie.game.screens.GameScreenManager;
+import com.rustie.game.screens.MenuScreen;
 import com.rustie.game.screens.PlayScreen;
 //import com.rustie.game.states.GameStateManager;
 //import com.rustie.game.states.MenuState;
 
 public class Slit extends Game {
     // virtual width and heights
-	public static final int WIDTH = 800;
-	public static final int HEIGHT = 600;
+	public static final int WIDTH = 1280;
+	public static final int HEIGHT = 720;
 
     // pixels per meter
     public static final float PPM = 100;
@@ -25,9 +27,15 @@ public class Slit extends Game {
     public static Application.ApplicationType APP_TYPE;
 	public static boolean IS_MOBILE;
 
-//	private GameStateManager mGsm;
+	public static final short DEFAULT_BIT = 1;
+	public static final short PLAYER_BIT = 2;
+	public static final short COIN_BIT = 4;
+	public static final short WALL_BIT = 8;
+	public static final short DESTROYED_BIT = 16;
 
+	public static Integer SCORE = 0;
 
+	private GameScreenManager mGsm;
 
 	// only need 1
 	public static SpriteBatch mBatch;
@@ -37,7 +45,6 @@ public class Slit extends Game {
 	@Override
 	public void create() {
 		this.mBatch = new SpriteBatch();
-		setScreen(new PlayScreen(this));
 
 //		Gdx.app.setLogLevel(Application.LOG_DEBUG);
 
@@ -45,23 +52,25 @@ public class Slit extends Game {
 		IS_MOBILE = APP_TYPE == Application.ApplicationType.Android ||
 				APP_TYPE == Application.ApplicationType.iOS;
 
+		this.mGsm = new GameScreenManager(this);
+		this.mGsm.push(new MenuScreen(mGsm, this));
 
-//		this.mGsm = new GameStateManager();
-//		Gdx.gl.glClearColor(1, 0, 0, 1);
-//		this.mGsm.push(new MenuState(mGsm));
+//		setScreen(new PlayScreen(mGsm, this, "level1.tmx"));
+
 	}
 
 	@Override
 	public void render() {
         super.render();
+		float dt = Gdx.graphics.getDeltaTime();
 
 //
 //		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-//		this.mGsm.update(Gdx.graphics.getDeltaTime());
-//		this.mGsm.render(mBatch);
+		this.mGsm.update(dt);
+		this.mGsm.render(dt);
 //
-//		mBatch.begin();
-//		mBatch.end();
+		mBatch.begin();
+		mBatch.end();
 	}
 
 	@Override
@@ -69,4 +78,6 @@ public class Slit extends Game {
 		mBatch.dispose();
 		img.dispose();
 	}
+
+
 }

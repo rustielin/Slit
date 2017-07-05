@@ -4,6 +4,10 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.physics.box2d.Body;
+import com.badlogic.gdx.physics.box2d.BodyDef;
+import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -29,7 +33,6 @@ public class Controller {
     Viewport mViewport;
     Stage mStage;
 
-    OrthographicCamera mCam;
 
     public static final int RADIUS = 100;
 
@@ -38,46 +41,30 @@ public class Controller {
     private int yPos = 0;
 
     // testing touchpad
-    private Touchpad touchpad;
+    public Touchpad touchpad;
     private Touchpad.TouchpadStyle touchpadStyle;
     private Skin touchpadSkin;
     private Drawable touchKnob;
     private Drawable touchBackground;
+    public Body mB2Body;
+    public World mWorld;
 
 
     /**
      * Initializes buttons and sets their listeners
      */
-    public Controller() {
-        mCam = new OrthographicCamera();
-        mViewport = new FitViewport(Slit.WIDTH, Slit.HEIGHT, mCam);
-        mStage = new Stage(mViewport, Slit.mBatch);
+    public Controller(SpriteBatch spriteBatch, World world) {
+        this.mWorld = world;
 
-        mStage.addListener(new InputListener() {
-            @Override
-            public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
+        mViewport = new FitViewport(Slit.WIDTH, Slit.HEIGHT, new OrthographicCamera());
+        mStage = new Stage(mViewport, spriteBatch);
 
-                if (getEucDist((int) x, xPos, (int) y, yPos) > RADIUS / 2) {
-                    xPos = (int) x - RADIUS;
-                    yPos = (int) y - RADIUS;
-                    updateTouchpadLocation(xPos, yPos);
-                    touchpad.setVisible(true);
-
-                }
-
-                return super.touchDown(event, x, y, pointer, button);
-            }
-
-            @Override
-            public void touchUp(InputEvent event, float x, float y, int pointer, int button) {
-                touchpad.setVisible(false);
-                super.touchUp(event, x, y, pointer, button);
-            }
-        });
-
+        BodyDef bdef = new BodyDef();
+        bdef.position.set(32 / Slit.PPM, 32 / Slit.PPM); // set this programatically later
+        bdef.type = BodyDef.BodyType.DynamicBody;
+        mB2Body = mWorld.createBody(bdef);
 
         Gdx.input.setInputProcessor(mStage);
-
 
         touchpadSkin = new Skin();
         touchpadSkin.add("touchBackground", new Texture("touchBackground.png"));
@@ -87,11 +74,9 @@ public class Controller {
         touchKnob = touchpadSkin.getDrawable("touchKnob");
         touchpadStyle.background = touchBackground;
         touchpadStyle.knob = touchKnob;
-        touchpad = new Touchpad(100, touchpadStyle);
-//        touchpad.setBounds(15, 15, RADIUS * 2, RADIUS * 2);
+        touchpad = new Touchpad(0, touchpadStyle);
+        touchpad.setBounds(100, 100, RADIUS * 2, RADIUS * 2);
 
-        // for now
-        touchpad.setVisible(false);
         mStage.addActor(touchpad);
 
     }

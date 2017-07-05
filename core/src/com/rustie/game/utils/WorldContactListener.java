@@ -22,7 +22,8 @@ public class WorldContactListener implements ContactListener {
             Fixture object = fixA.getUserData() instanceof InteractiveTileObject ? fixA : fixB;
             Fixture player = object == fixA ? fixB : fixA;
 
-        ((InteractiveTileObject) object.getUserData()).onCollide();
+            ((InteractiveTileObject) object.getUserData()).onCollide();
+
         }
 
 
