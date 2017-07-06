@@ -34,7 +34,6 @@ public class Player extends Sprite {
         this.mPosition = mB2Body.getPosition();
         this.mVelocity = mB2Body.getLinearVelocity();
 
-
     }
 
     public void definePlayer() {

@@ -36,8 +36,10 @@ public class MenuScreen extends GameScreen {
         super(gsm);
         Gdx.app.log(TAG, "ENTER");
 
+
         this.mGame = game;
         mPlayBtn = new Texture("badlogic.jpg");
+        mBackground = new Texture("black.jpg");
 
     }
 
@@ -54,7 +56,7 @@ public class MenuScreen extends GameScreen {
         if (Gdx.input.justTouched()) {
             Gdx.app.log(TAG, "EXIT");
 
-            mGsm.set(new PlayScreen(mGsm, mGame, "level1.tmx"));
+            mGsm.set(new PlayScreen(mGsm, mGame, "level1more.tmx"));
 
             dispose(); // get rid of stuff not using anymore
         }
@@ -66,6 +68,7 @@ public class MenuScreen extends GameScreen {
         mGame.mBatch.begin();
 
         // put
+        mGame.mBatch.draw(mBackground, 0, 0, Slit.WIDTH, Slit.HEIGHT);
         mGame.mBatch.draw(mPlayBtn, (Slit.WIDTH / 2) - (mPlayBtn.getWidth() / 2), Slit.HEIGHT / 2);
 
         // close
@@ -95,5 +98,6 @@ public class MenuScreen extends GameScreen {
     @Override
     public void dispose() {
         mPlayBtn.dispose();
+        mBackground.dispose();
     }
 }

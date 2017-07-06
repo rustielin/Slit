@@ -68,7 +68,7 @@ public class PlayScreen extends GameScreen {
         Gdx.app.log(TAG, "ENTER");
 
         this.mGame = game;
-        this.mGamePort = new FitViewport(Slit.WIDTH / Slit.PPM, Slit.HEIGHT / Slit.PPM, mCam);
+        this.mGamePort = new FitViewport(Slit.WIDTH / Slit.PPM , Slit.HEIGHT / Slit.PPM, mCam);
 
         mFixtureArray = new Array<Fixture>();
 
