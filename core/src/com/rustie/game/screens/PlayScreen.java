@@ -37,12 +37,13 @@ public class PlayScreen extends GameScreen {
     private static float MOVEMENT_SPEED = 1f;
     private static float SLOW_SPEED = 0.5f;
 
-
+    // primary game attributes
     private Slit mGame;
     private Viewport mGamePort;
     private Hud mHud;
     private Player mPlayer;
 
+    // for compatibility with Tiled
     private TmxMapLoader mMapLoader;
     private TiledMap mMap;
     private OrthogonalTiledMapRenderer mRenderer;
@@ -51,15 +52,15 @@ public class PlayScreen extends GameScreen {
     private World mWorld;
     private Box2DDebugRenderer box2DDebugRenderer;
 
-    //box2dlight
+    // lighting
     public RayHandler mRayHandler;
     private box2dLight.PointLight mPlayerLight;
     private float playerLightDistance = 2;
     private int playerLightDirection = 1;
+    private PulsatingLight mPlayerPulse;
 
-    // sweeping
-    Array<Fixture> mFixtureArray;
-    PulsatingLight mPlayerPulse;
+    // sweeping for updates and dispose
+    private Array<Fixture> mFixtureArray;
 
 
     public PlayScreen(GameScreenManager gsm, Slit game, String level) {
@@ -67,41 +68,35 @@ public class PlayScreen extends GameScreen {
 
         Gdx.app.log(TAG, "ENTER");
 
-        this.mGame = game;
-        this.mGamePort = new FitViewport(Slit.WIDTH / Slit.PPM , Slit.HEIGHT / Slit.PPM, mCam);
+        mGame = game; // persist the game instance
 
-        mFixtureArray = new Array<Fixture>();
+        // new world with no gravity; hud; listens for contact
+        mWorld = new World(new Vector2(0, 0), true);
+        mHud = new Hud(mGame.mBatch, mWorld);
+        mWorld.setContactListener(new WorldContactListener());
 
 
+        // render attributes
+        mGamePort = new FitViewport(Slit.WIDTH / Slit.PPM , Slit.HEIGHT / Slit.PPM, mCam);
+        mCam.position.set(mGamePort.getWorldWidth() / 2, mGamePort.getWorldHeight() / 2, 0);
+        box2DDebugRenderer = new Box2DDebugRenderer();
+
+        // render Tiled map
         mMapLoader = new TmxMapLoader();
         mMap = mMapLoader.load(level);
         mRenderer = new OrthogonalTiledMapRenderer(mMap, 1/ Slit.PPM);
 
-        Gdx.app.log(TAG, "" + mCam);
-
-        mCam.position.set(mGamePort.getWorldWidth() / 2, mGamePort.getWorldHeight() / 2, 0);
-
-        mWorld = new World(new Vector2(0, 0), true); // no gravity, and sleep all objects at rest
-
-        this.mPlayer = new Player(mWorld);
-
-
-        this.mRayHandler = new RayHandler(mWorld);
+        // make the player and lights
+        mPlayer = new Player(mWorld);
+        mRayHandler = new RayHandler(mWorld);
         mPlayerLight = new box2dLight.PointLight(mRayHandler, 100, Color.WHITE, playerLightDistance, 32 / Slit.PPM, 32 / Slit.PPM);
         mPlayerLight.setSoftnessLength(0f);
         mPlayerLight.attachToBody(mPlayer.mB2Body);
         mPlayerPulse = new PulsatingLight(mPlayerLight, 0, 2, 1, 1, true);
 
-
-        box2DDebugRenderer = new Box2DDebugRenderer();
-
-        // create the world
-        B2WorldCreator creator = new B2WorldCreator(mWorld, mMap, mRayHandler);
-        // do something with it?
-
-        this.mHud = new Hud(mGame.mBatch, mWorld);
-
-        this.mWorld.setContactListener(new WorldContactListener());
+        // create the world and inject to physics
+        new B2WorldCreator(mWorld, mMap, mRayHandler);
+        mFixtureArray = new Array<Fixture>();
 
     }
 
