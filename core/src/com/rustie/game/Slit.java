@@ -54,6 +54,8 @@ public class Slit extends Game {
 				APP_TYPE == Application.ApplicationType.iOS;
 
 		this.mGsm = new GameScreenManager(this);
+
+        // start on a menu screen
 		this.mGsm.push(new MenuScreen(mGsm, this));
 	}
 
@@ -62,7 +64,6 @@ public class Slit extends Game {
         super.render();
 		float dt = Gdx.graphics.getDeltaTime();
 
-//
 //		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 		this.mGsm.update(dt);
 		this.mGsm.render(dt);

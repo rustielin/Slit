@@ -19,6 +19,8 @@ import com.rustie.game.Slit;
 
 /**
  * Created by rustie on 5/15/17.
+ *
+ * Models game as a stack of GameScreens. Processes top of the stack upon request
  */
 
 public class GameScreenManager {
@@ -40,7 +42,7 @@ public class GameScreenManager {
     }
 
     /**
-     * Pop and then push the GameScreen
+     * Pop and then push
      * @param screen
      */
     public void set(GameScreen screen) {
@@ -48,10 +50,18 @@ public class GameScreenManager {
         mScreens.push(screen);
     }
 
+    /**
+     * Update the current screen
+     * @param dt
+     */
     public void update(float dt) {
         mScreens.peek().update(dt);
     }
 
+    /**
+     * Render and display the current screen
+     * @param dt
+     */
     public void render(float dt) {
         GameScreen pk = mScreens.peek();
         pk.render(dt);

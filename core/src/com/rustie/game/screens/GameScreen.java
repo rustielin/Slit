@@ -5,6 +5,8 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 
 /**
  * Created by rustie on 7/5/17.
+ *
+ * Wrapper for the libgdx Screen interface. Lets us call update in the GameScreenManager
  */
 
 public class GameScreen implements Screen {
