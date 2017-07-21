@@ -4,19 +4,27 @@ import com.badlogic.gdx.Application;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.FPSLogger;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.physics.box2d.Box2D;
 import com.rustie.game.screens.GameScreenManager;
+import com.rustie.game.screens.InteractiveMenuScreen;
 import com.rustie.game.screens.MenuScreen;
+
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.Map;
+
+import static com.badlogic.gdx.Gdx.gl;
 
 public class Slit extends Game {
 
     // virtual width and heights
-	public static final int WIDTH = 1280;
-	public static final int HEIGHT = 720;
+	public static final int WIDTH = 720;
+	public static final int HEIGHT = 1280;
 
     // pixels per meter for scaling purposes
     public static final float PPM = 100;
@@ -56,13 +64,19 @@ public class Slit extends Game {
 		this.mGsm = new GameScreenManager(this);
 
         // start on a menu screen
-		this.mGsm.push(new MenuScreen(mGsm, this));
+//		this.mGsm.push(new MenuScreen(mGsm, this));
+		mGsm.push(new InteractiveMenuScreen(mGsm, this, "level1.tmx"));
+
+		playMusic();
 	}
+
 
 	@Override
 	public void render() {
         super.render();
+
 		float dt = Gdx.graphics.getDeltaTime();
+
 
 //		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 		this.mGsm.update(dt);
@@ -75,6 +89,13 @@ public class Slit extends Game {
 	@Override
 	public void dispose() {
 		mBatch.dispose();
+	}
+
+	public void playMusic() {
+		Music music = Gdx.audio.newMusic(Gdx.files.internal("satie.mp3"));
+		music.setLooping(true);
+		music.play();
+
 	}
 
 

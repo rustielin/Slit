@@ -3,6 +3,7 @@ package com.rustie.game.screens;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -30,6 +31,7 @@ public class MenuScreen extends GameScreen {
 
     private Texture mBackground;
     private Texture mPlayBtn;
+    private Viewport mGamePort;
 
     // fancy lights for later
     private RayHandler mRayHandler;
@@ -40,8 +42,10 @@ public class MenuScreen extends GameScreen {
         super(gsm);
         Gdx.app.log(TAG, "ENTER");
 
+        mGamePort = new FitViewport(Slit.WIDTH / Slit.PPM , Slit.HEIGHT / Slit.PPM, mCam);
+        mCam.position.set(mGamePort.getWorldWidth(), mGamePort.getWorldHeight(), 0);
 
-        this.mGame = game;
+        mGame = game;
         mPlayBtn = new Texture("play_filled.png");
         mBackground = new Texture("black.jpg");
 
@@ -69,6 +73,10 @@ public class MenuScreen extends GameScreen {
     @Override
     public void render(float delta) {
 
+        // clear with black
+        Gdx.gl.glClearColor(0, 0, 0, 1);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
         // open batch to draw textures
         mGame.mBatch.begin();
 
@@ -82,7 +90,7 @@ public class MenuScreen extends GameScreen {
 
     @Override
     public void resize(int width, int height) {
-
+        mGamePort.update(width, height);
     }
 
     @Override

@@ -60,7 +60,7 @@ public class Controller {
         mStage = new Stage(mViewport, spriteBatch);
 
         BodyDef bdef = new BodyDef();
-        bdef.position.set(32 / Slit.PPM, 32 / Slit.PPM); // set this programatically later
+        bdef.position.set(Slit.HEIGHT / Slit.PPM, Slit.WIDTH / Slit.PPM); // set this programatically later
         bdef.type = BodyDef.BodyType.DynamicBody;
         mB2Body = mWorld.createBody(bdef);
 

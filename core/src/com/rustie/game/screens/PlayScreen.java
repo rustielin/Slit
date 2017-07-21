@@ -72,7 +72,7 @@ public class PlayScreen extends GameScreen {
 
         // new world with no gravity; hud; listens for contact
         mWorld = new World(new Vector2(0, 0), true);
-        mHud = new Hud(mGame.mBatch, mWorld);
+        mHud = new Hud(mGame.mBatch, mWorld, true);
         mWorld.setContactListener(new WorldContactListener());
 
 
