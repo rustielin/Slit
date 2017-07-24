@@ -1,24 +1,12 @@
 package com.rustie.game;
 
 import com.badlogic.gdx.Application;
-import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.audio.Music;
-import com.badlogic.gdx.graphics.FPSLogger;
-import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.physics.box2d.Box2D;
 import com.rustie.game.screens.GameScreenManager;
-import com.rustie.game.screens.InteractiveMenuScreen;
-import com.rustie.game.screens.MenuScreen;
-
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.Map;
-
-import static com.badlogic.gdx.Gdx.gl;
+import com.rustie.game.screens.PlayScreen;
 
 public class Slit extends Game {
 
@@ -65,7 +53,7 @@ public class Slit extends Game {
 
         // start on a menu screen
 //		this.mGsm.push(new MenuScreen(mGsm, this));
-		mGsm.push(new InteractiveMenuScreen(mGsm, this, "level1.tmx"));
+		mGsm.push(new PlayScreen(mGsm, this, "level1.tmx"));
 
 		playMusic();
 	}

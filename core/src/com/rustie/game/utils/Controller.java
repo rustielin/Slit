@@ -5,17 +5,22 @@ import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.World;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Button;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
+import com.badlogic.gdx.scenes.scene2d.ui.ImageButton;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.Touchpad;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
+import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.rustie.game.Slit;
@@ -35,6 +40,7 @@ public class Controller {
 
 
     public static final int RADIUS = 100;
+    private boolean pressed = false;
 
     // positioning of touch center
     private int xPos = 0;
@@ -75,7 +81,7 @@ public class Controller {
         touchpadStyle.background = touchBackground;
         touchpadStyle.knob = touchKnob;
         touchpad = new Touchpad(0, touchpadStyle);
-        touchpad.setBounds(100, 100, RADIUS * 2, RADIUS * 2);
+        touchpad.setBounds(Slit.WIDTH - RADIUS * 3, RADIUS, RADIUS * 2, RADIUS * 2);
 
         mStage.addActor(touchpad);
 
@@ -108,6 +114,15 @@ public class Controller {
 
     private float getEucDist(int x1, int x2, int y1, int y2) {
         return (float) Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
+    }
+
+    public boolean isButtonPressed() {
+        if (!pressed && !touchpad.isTouched() && Gdx.input.justTouched()) {
+            pressed = true;
+            return true;
+        }
+        pressed = false;
+        return false;
     }
 
 }

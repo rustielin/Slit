@@ -1,10 +1,14 @@
 package com.rustie.game.screens;
 
 import com.badlogic.gdx.Application;
+import com.badlogic.gdx.Audio;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
@@ -13,7 +17,9 @@ import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.viewport.FillViewport;
 import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.rustie.game.Slit;
 import com.rustie.game.scenes.Hud;
@@ -21,21 +27,27 @@ import com.rustie.game.sprites.Coin;
 import com.rustie.game.sprites.Player;
 import com.rustie.game.sprites.Wall;
 import com.rustie.game.utils.B2WorldCreator;
+import com.rustie.game.utils.PlayerInputProcessor;
 import com.rustie.game.utils.PulsatingLight;
 import com.rustie.game.utils.WorldContactListener;
 
+import java.util.HashSet;
+
+import box2dLight.ConeLight;
+import box2dLight.Light;
+import box2dLight.PointLight;
 import box2dLight.RayHandler;
 
 /**
- * Created by rustie on 5/18/17.
+ * Created by rustie on 7/21/17.
  */
 
 public class PlayScreen extends GameScreen {
 
-    public static final String TAG = "PlayScreen";
+    public static final String TAG = "Play Screen";
 
-    private static float MOVEMENT_SPEED = 1f;
-    private static float SLOW_SPEED = 0.5f;
+    private BitmapFont mTitle;
+
 
     // primary game attributes
     private Slit mGame;
@@ -61,10 +73,13 @@ public class PlayScreen extends GameScreen {
 
     // sweeping for updates and dispose
     private Array<Fixture> mFixtureArray;
+    private HashSet<Light> mBeaconSet;
 
 
     public PlayScreen(GameScreenManager gsm, Slit game, String level) {
         super(gsm);
+        mTitle = new BitmapFont();
+        mTitle.setColor(Color.WHITE);
 
         Gdx.app.log(TAG, "ENTER");
 
@@ -72,31 +87,38 @@ public class PlayScreen extends GameScreen {
 
         // new world with no gravity; hud; listens for contact
         mWorld = new World(new Vector2(0, 0), true);
-        mHud = new Hud(mGame.mBatch, mWorld, true);
+        mHud = new Hud(mGame.mBatch, mWorld, false);
         mWorld.setContactListener(new WorldContactListener());
 
 
         // render attributes
-        mGamePort = new FitViewport(Slit.WIDTH / Slit.PPM , Slit.HEIGHT / Slit.PPM, mCam);
+//        mGamePort = new FitViewport(Slit.WIDTH / Slit.PPM , Slit.HEIGHT / Slit.PPM, mCam);
+        mGamePort = new FillViewport(Slit.WIDTH / Slit.PPM, Slit.HEIGHT / Slit.PPM, mCam);
+//        ((ScreenViewport) mGamePort).setUnitsPerPixel(Slit.PPM);
+
         mCam.position.set(mGamePort.getWorldWidth() / 2, mGamePort.getWorldHeight() / 2, 0);
         box2DDebugRenderer = new Box2DDebugRenderer();
 
-        // render Tiled map
-        mMapLoader = new TmxMapLoader();
-        mMap = mMapLoader.load(level);
-        mRenderer = new OrthogonalTiledMapRenderer(mMap, 1/ Slit.PPM);
+//        // render Tiled map
+//        mMapLoader = new TmxMapLoader();
+//        mMap = mMapLoader.load(level);
+//        mRenderer = new OrthogonalTiledMapRenderer(mMap, 1/ Slit.PPM);
 
         // make the player and lights
-        mPlayer = new Player(mWorld);
+        mPlayer = new Player(mWorld, this);
         mRayHandler = new RayHandler(mWorld);
+        mRayHandler.setShadows(false);
         mPlayerLight = new box2dLight.PointLight(mRayHandler, 100, Color.WHITE, playerLightDistance, 32 / Slit.PPM, 32 / Slit.PPM);
         mPlayerLight.setSoftnessLength(0f);
         mPlayerLight.attachToBody(mPlayer.mB2Body);
-        mPlayerPulse = new PulsatingLight(mPlayerLight, 0, 2, 1, 1, true);
+        mPlayerPulse = new PulsatingLight(mPlayerLight, 0, 2, 0.8f, 1, true);
+        mBeaconSet = new HashSet<Light>();
 
         // create the world and inject to physics
-        new B2WorldCreator(mWorld, mMap, mRayHandler);
+//        new B2WorldCreator(mWorld, mMap, mRayHandler);
         mFixtureArray = new Array<Fixture>();
+
+        Gdx.input.setInputProcessor(new PlayerInputProcessor(mPlayer));
 
     }
 
@@ -106,51 +128,15 @@ public class PlayScreen extends GameScreen {
      */
     private void checkTouchpadInput(float dt) {
         // Handle mobile on screen buttons
-        mPlayer.move(MOVEMENT_SPEED * mHud.controller.getTouchpadPercentX(), MOVEMENT_SPEED * mHud.controller.getTouchpadPercentY());
+        mPlayer.move(Player.MOVEMENT_SPEED * mHud.controller.getTouchpadPercentX(), Player.MOVEMENT_SPEED * mHud.controller.getTouchpadPercentY());
 //        mPlayer.move(MOVEMENT_SPEED * Gdx.input.getAccelerometerY(), -1 * MOVEMENT_SPEED * Gdx.input.getAccelerometerX());
-    }
 
-    /**
-     * Check arrow/WASD key input if device is not mobile type
-     * @param dt
-     */
-    private void checkKeyInput(float dt) {
-
-        // Handle WASD and arrow keys
-        if (Gdx.input.isKeyPressed(Input.Keys.LEFT) || Gdx.input.isKeyPressed(Input.Keys.A)) {
-            if (Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT)) {
-                mPlayer.move(-MOVEMENT_SPEED * SLOW_SPEED, mPlayer.mB2Body.getLinearVelocity().y);
-            } else {
-                mPlayer.move(-MOVEMENT_SPEED, mPlayer.mB2Body.getLinearVelocity().y);
-            }
-        } else if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) || Gdx.input.isKeyPressed(Input.Keys.D)) {
-            if (Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT)) {
-                mPlayer.move(MOVEMENT_SPEED * SLOW_SPEED, mPlayer.mB2Body.getLinearVelocity().y);
-
-            } else {
-                mPlayer.move(MOVEMENT_SPEED, mPlayer.mB2Body.getLinearVelocity().y);
-            }
-        } else {
-            mPlayer.mB2Body.setLinearVelocity(0, mPlayer.mB2Body.getLinearVelocity().y);
-        }
-
-        if (Gdx.input.isKeyPressed(Input.Keys.UP) || Gdx.input.isKeyPressed(Input.Keys.W)) {
-            if (Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT)) {
-                mPlayer.move(mPlayer.mB2Body.getLinearVelocity().x, MOVEMENT_SPEED * SLOW_SPEED);
-
-            } else {
-                mPlayer.move(mPlayer.mB2Body.getLinearVelocity().x, MOVEMENT_SPEED);
-            }
-        } else if (Gdx.input.isKeyPressed(Input.Keys.DOWN) || Gdx.input.isKeyPressed(Input.Keys.S)) {
-            if (Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT)) {
-                mPlayer.move(mPlayer.mB2Body.getLinearVelocity().x, -MOVEMENT_SPEED * SLOW_SPEED);
-            } else {
-                mPlayer.move(mPlayer.mB2Body.getLinearVelocity().x, -MOVEMENT_SPEED);
-            }
-        } else {
-            mPlayer.mB2Body.setLinearVelocity(mPlayer.mB2Body.getLinearVelocity().x, 0);
+        if (mHud.controller.isButtonPressed()) {
+            dropBeacon(mPlayer.getX(), mPlayer.getY());
         }
     }
+
+
 
     public void handleInput(float dt) {
 
@@ -158,7 +144,7 @@ public class PlayScreen extends GameScreen {
         if (Slit.IS_MOBILE) {
             checkTouchpadInput(dt);
         } else {
-            checkKeyInput(dt);
+//            checkKeyInput(dt);
 //            checkTouchpadInput(dt);
 
         }
@@ -172,6 +158,7 @@ public class PlayScreen extends GameScreen {
 
         mCam.position.x = mPlayer.mB2Body.getPosition().x; // lol fps mode
         mCam.position.y = mPlayer.mB2Body.getPosition().y;
+//        Gdx.app.log(TAG, "posx: " + mCam.position.x);
 
 
         // sweep dead stuff
@@ -189,7 +176,7 @@ public class PlayScreen extends GameScreen {
         mHud.update();
 
         // render only what we can see
-        mRenderer.setView(mCam);
+//        mRenderer.setView(mCam);
 
     }
 
@@ -207,7 +194,7 @@ public class PlayScreen extends GameScreen {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         // render game map
-        mRenderer.render();
+//        mRenderer.render();
 
         // render debug stuff
         box2DDebugRenderer.render(mWorld, mCam.combined);
@@ -226,11 +213,20 @@ public class PlayScreen extends GameScreen {
             mHud.controller.draw();
         }
 
+        // open batch to draw textures
+        mGame.mBatch.begin();
+
+        // put textures
+
+
+        // close
+        mGame.mBatch.end();
+
     }
 
     @Override
     public void resize(int width, int height) {
-        mGamePort.update(width, height);
+        mGamePort.update(width, height, true);
 
     }
 
@@ -252,11 +248,19 @@ public class PlayScreen extends GameScreen {
     @Override
     public void dispose() {
         mRayHandler.dispose();
-        mMap.dispose();
-        mRenderer.dispose();
+//        mMap.dispose();
+//        mRenderer.dispose();
         mWorld.dispose();
         box2DDebugRenderer.dispose();
         mHud.dispose();
+
+        // get rid of all lights
+        for (Light l : mBeaconSet) {
+            l.dispose();
+        }
+        mPlayerPulse = null;
+        mPlayerLight.dispose();
+
     }
 
 
@@ -275,4 +279,10 @@ public class PlayScreen extends GameScreen {
         }
     }
 
+
+    public void dropBeacon(float x, float y) {
+        Light beacon = new PointLight(mRayHandler, 10, mPlayerPulse.getColor(), playerLightDistance / 10, x, y);
+        mBeaconSet.add(beacon);
+        Gdx.app.log(TAG, "" + mBeaconSet.size());
+    }
 }

@@ -1,13 +1,10 @@
 package com.rustie.game.screens;
 
 import com.badlogic.gdx.Application;
-import com.badlogic.gdx.Audio;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
-import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
@@ -16,9 +13,7 @@ import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.viewport.FillViewport;
 import com.badlogic.gdx.utils.viewport.FitViewport;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.rustie.game.Slit;
 import com.rustie.game.scenes.Hud;
@@ -32,15 +27,12 @@ import com.rustie.game.utils.WorldContactListener;
 import box2dLight.RayHandler;
 
 /**
- * Created by rustie on 7/21/17.
+ * Created by rustie on 5/18/17.
  */
 
-public class InteractiveMenuScreen extends GameScreen {
+public class PlayScreenOld extends GameScreen {
 
-    public static final String TAG = "Interactive Menu";
-
-    private Texture mPlayBtn;
-
+    public static final String TAG = "PlayScreenOld";
 
     private static float MOVEMENT_SPEED = 1f;
     private static float SLOW_SPEED = 0.5f;
@@ -71,10 +63,8 @@ public class InteractiveMenuScreen extends GameScreen {
     private Array<Fixture> mFixtureArray;
 
 
-    public InteractiveMenuScreen(GameScreenManager gsm, Slit game, String level) {
+    public PlayScreenOld(GameScreenManager gsm, Slit game, String level) {
         super(gsm);
-
-        mPlayBtn = new Texture("play_filled.png");
 
         Gdx.app.log(TAG, "ENTER");
 
@@ -87,28 +77,25 @@ public class InteractiveMenuScreen extends GameScreen {
 
 
         // render attributes
-//        mGamePort = new FitViewport(Slit.WIDTH / Slit.PPM , Slit.HEIGHT / Slit.PPM, mCam);
-        mGamePort = new FillViewport(Slit.WIDTH / Slit.PPM, Slit.HEIGHT / Slit.PPM, mCam);
-//        ((ScreenViewport) mGamePort).setUnitsPerPixel(Slit.PPM);
-
+        mGamePort = new FitViewport(Slit.WIDTH / Slit.PPM , Slit.HEIGHT / Slit.PPM, mCam);
         mCam.position.set(mGamePort.getWorldWidth() / 2, mGamePort.getWorldHeight() / 2, 0);
         box2DDebugRenderer = new Box2DDebugRenderer();
 
-//        // render Tiled map
-//        mMapLoader = new TmxMapLoader();
-//        mMap = mMapLoader.load(level);
-//        mRenderer = new OrthogonalTiledMapRenderer(mMap, 1/ Slit.PPM);
+        // render Tiled map
+        mMapLoader = new TmxMapLoader();
+        mMap = mMapLoader.load(level);
+        mRenderer = new OrthogonalTiledMapRenderer(mMap, 1/ Slit.PPM);
 
         // make the player and lights
-        mPlayer = new Player(mWorld);
+//        mPlayer = new Player(mWorld);
         mRayHandler = new RayHandler(mWorld);
         mPlayerLight = new box2dLight.PointLight(mRayHandler, 100, Color.WHITE, playerLightDistance, 32 / Slit.PPM, 32 / Slit.PPM);
         mPlayerLight.setSoftnessLength(0f);
         mPlayerLight.attachToBody(mPlayer.mB2Body);
-        mPlayerPulse = new PulsatingLight(mPlayerLight, 0, 2, 0.8f, 1, true);
+        mPlayerPulse = new PulsatingLight(mPlayerLight, 0, 2, 1, 1, true);
 
         // create the world and inject to physics
-//        new B2WorldCreator(mWorld, mMap, mRayHandler);
+        new B2WorldCreator(mWorld, mMap, mRayHandler);
         mFixtureArray = new Array<Fixture>();
 
     }
@@ -185,7 +172,6 @@ public class InteractiveMenuScreen extends GameScreen {
 
         mCam.position.x = mPlayer.mB2Body.getPosition().x; // lol fps mode
         mCam.position.y = mPlayer.mB2Body.getPosition().y;
-//        Gdx.app.log(TAG, "posx: " + mCam.position.x);
 
 
         // sweep dead stuff
@@ -203,7 +189,7 @@ public class InteractiveMenuScreen extends GameScreen {
         mHud.update();
 
         // render only what we can see
-//        mRenderer.setView(mCam);
+        mRenderer.setView(mCam);
 
     }
 
@@ -221,7 +207,7 @@ public class InteractiveMenuScreen extends GameScreen {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         // render game map
-//        mRenderer.render();
+        mRenderer.render();
 
         // render debug stuff
         box2DDebugRenderer.render(mWorld, mCam.combined);
@@ -240,20 +226,11 @@ public class InteractiveMenuScreen extends GameScreen {
             mHud.controller.draw();
         }
 
-        // open batch to draw textures
-        mGame.mBatch.begin();
-
-        // put textures
-        mGame.mBatch.draw(mPlayBtn, (Slit.WIDTH / 2) - (mPlayBtn.getWidth() / 2), Slit.HEIGHT / 2);
-
-        // close
-        mGame.mBatch.end();
-
     }
 
     @Override
     public void resize(int width, int height) {
-        mGamePort.update(width, height, true);
+        mGamePort.update(width, height);
 
     }
 
@@ -275,13 +252,11 @@ public class InteractiveMenuScreen extends GameScreen {
     @Override
     public void dispose() {
         mRayHandler.dispose();
-//        mMap.dispose();
-//        mRenderer.dispose();
+        mMap.dispose();
+        mRenderer.dispose();
         mWorld.dispose();
         box2DDebugRenderer.dispose();
         mHud.dispose();
-        mPlayBtn.dispose();
-
     }
 
 
@@ -299,4 +274,5 @@ public class InteractiveMenuScreen extends GameScreen {
             }
         }
     }
+
 }

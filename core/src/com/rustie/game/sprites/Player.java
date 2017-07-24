@@ -1,18 +1,16 @@
 package com.rustie.game.sprites;
 
-import com.badlogic.gdx.graphics.Pixmap;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
-import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.CircleShape;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.World;
-import com.badlogic.gdx.physics.box2d.utils.Box2DBuild;
 import com.rustie.game.Slit;
+import com.rustie.game.screens.PlayScreen;
+
+import box2dLight.Light;
 
 /**
  * Created by rustie on 5/16/17.
@@ -28,11 +26,18 @@ public class Player extends Sprite {
     private static final double ACC = 0.25;
     private static final double VMAX = 1;
 
-    public Player(World world) {
+    public static float MOVEMENT_SPEED = 1f;
+    public static float SLOW_SPEED = 0.5f;
+
+    private Light mLight;
+    private PlayScreen mI;
+
+    public Player(World world, PlayScreen interactiveMenuScreen) {
         this.mWorld = world;
         definePlayer();
         this.mPosition = mB2Body.getPosition();
         this.mVelocity = mB2Body.getLinearVelocity();
+        mI = interactiveMenuScreen;
     }
 
     public void definePlayer() {
@@ -47,6 +52,10 @@ public class Player extends Sprite {
 
         fdef.shape = shape;
         mB2Body.createFixture(fdef);
+    }
+
+    public void attachLight(Light light) {
+        mLight = light;
     }
 
     public void move(double ix, double iy) {
@@ -71,4 +80,51 @@ public class Player extends Sprite {
 
     }
 
+    public void setMoveRight(boolean b) {
+        if (b) {
+            mVelocity.x += MOVEMENT_SPEED;
+        } else {
+            mVelocity.x -= MOVEMENT_SPEED;
+        }
+        mB2Body.setLinearVelocity(mVelocity);
+    }
+
+    public void setMoveLeft(boolean b) {
+        setMoveRight(!b);
+    }
+
+    public void setMoveUp(boolean b) {
+        if (b) {
+            mVelocity.y += MOVEMENT_SPEED;
+        } else {
+            mVelocity.y -= MOVEMENT_SPEED;
+        }
+        mB2Body.setLinearVelocity(mVelocity);
+    }
+
+    public void setMoveDown(boolean b) {
+        setMoveUp(!b);
+    }
+
+    @Override
+    public float getX() {
+        return mB2Body.getPosition().x;
+    }
+
+    @Override
+    public float getY() {
+        return mB2Body.getPosition().y;
+    }
+
+    public float getXVelocity() {
+        return mVelocity.x;
+    }
+
+    public float getYVelocity() {
+        return mVelocity.y;
+    }
+
+    public void dropBeacon() {
+        mI.dropBeacon(getX(), getY());
+    }
 }
