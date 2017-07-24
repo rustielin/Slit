@@ -85,6 +85,19 @@ public class Controller {
 
         mStage.addActor(touchpad);
 
+        Button b = new Button();
+        Skin buttonSkin = new Skin();
+        buttonSkin.add("buttonUp", new Texture("touchKnob.png"));
+        buttonSkin.add("buttonDown", new Texture("touchKnob.png"));
+        buttonSkin.add("buttonChecked", new Texture("touchKnob.png"));
+        Button.ButtonStyle bs = new Button.ButtonStyle(buttonSkin.getDrawable("buttonUp"),
+                buttonSkin.getDrawable("buttonDown"), buttonSkin.getDrawable("buttonChecked"));
+
+        b.setStyle(bs);
+        b.bottom();
+        b.row();
+        mStage.addActor(b);
+
     }
 
     public void updateTouchpadLocation(int x, int y) {
@@ -123,6 +136,10 @@ public class Controller {
         }
         pressed = false;
         return false;
+    }
+
+    public boolean isTouchpadTouched() {
+        return touchpad.isTouched();
     }
 
 }

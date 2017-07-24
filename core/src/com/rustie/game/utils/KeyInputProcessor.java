@@ -3,18 +3,29 @@ package com.rustie.game.utils;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
+import com.badlogic.gdx.math.Vector2;
 import com.rustie.game.sprites.Player;
 
 /**
  * Created by rustie on 7/24/17.
  */
 
-public class PlayerInputProcessor implements InputProcessor {
+public class KeyInputProcessor implements InputProcessor {
+
+    public static final String TAG = "KeyInputProcessor";
     
     private Player mPlayer;
+    private Vector2 mLastTouch;
+    private Vector2 mNewTouch;
+    private Vector2 mDelta;
 
-    public PlayerInputProcessor(Player mPlayer) {
+    private boolean dragging = false;
+
+    public KeyInputProcessor(Player mPlayer) {
         this.mPlayer = mPlayer;
+        mLastTouch = new Vector2();
+        mDelta = new Vector2();
+        mNewTouch = new Vector2();
     }
 
     @Override
@@ -73,7 +84,8 @@ public class PlayerInputProcessor implements InputProcessor {
 
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-        return false;
+        mLastTouch.set(screenX, screenY);
+        return true;
     }
 
     @Override
@@ -83,7 +95,14 @@ public class PlayerInputProcessor implements InputProcessor {
 
     @Override
     public boolean touchDragged(int screenX, int screenY, int pointer) {
-        return false;
+
+        mNewTouch.set(screenX, screenY);
+        mDelta = mNewTouch.cpy().sub(mLastTouch);
+        mLastTouch = mNewTouch;
+        Gdx.app.log(TAG, "delta: " + mDelta.x + "   " + mDelta.y);
+
+
+        return true;
     }
 
     @Override

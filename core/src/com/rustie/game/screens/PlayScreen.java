@@ -1,13 +1,9 @@
 package com.rustie.game.screens;
 
 import com.badlogic.gdx.Application;
-import com.badlogic.gdx.Audio;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
-import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
@@ -18,22 +14,18 @@ import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.FillViewport;
-import com.badlogic.gdx.utils.viewport.FitViewport;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.rustie.game.Slit;
 import com.rustie.game.scenes.Hud;
 import com.rustie.game.sprites.Coin;
 import com.rustie.game.sprites.Player;
 import com.rustie.game.sprites.Wall;
-import com.rustie.game.utils.B2WorldCreator;
-import com.rustie.game.utils.PlayerInputProcessor;
+import com.rustie.game.utils.KeyInputProcessor;
 import com.rustie.game.utils.PulsatingLight;
 import com.rustie.game.utils.WorldContactListener;
 
 import java.util.HashSet;
 
-import box2dLight.ConeLight;
 import box2dLight.Light;
 import box2dLight.PointLight;
 import box2dLight.RayHandler;
@@ -118,7 +110,10 @@ public class PlayScreen extends GameScreen {
 //        new B2WorldCreator(mWorld, mMap, mRayHandler);
         mFixtureArray = new Array<Fixture>();
 
-        Gdx.input.setInputProcessor(new PlayerInputProcessor(mPlayer));
+        // load custom input processor for keys
+        if (!Slit.IS_MOBILE) {
+            Gdx.input.setInputProcessor(new KeyInputProcessor(mPlayer));
+        }
 
     }
 
@@ -129,30 +124,31 @@ public class PlayScreen extends GameScreen {
     private void checkTouchpadInput(float dt) {
         // Handle mobile on screen buttons
         mPlayer.move(Player.MOVEMENT_SPEED * mHud.controller.getTouchpadPercentX(), Player.MOVEMENT_SPEED * mHud.controller.getTouchpadPercentY());
-//        mPlayer.move(MOVEMENT_SPEED * Gdx.input.getAccelerometerY(), -1 * MOVEMENT_SPEED * Gdx.input.getAccelerometerX());
 
-        if (mHud.controller.isButtonPressed()) {
-            dropBeacon(mPlayer.getX(), mPlayer.getY());
+        if (!mHud.controller.isTouchpadTouched() && Gdx.input.justTouched()) {
+            mPlayer.dropBeacon();
+            return;
         }
+
+        if (mPlayer.isMoving() && Gdx.input.justTouched()) {
+            mPlayer.dropBeacon();
+        }
+
+
     }
 
 
 
-    public void handleInput(float dt) {
+    public void handleTouchInput(float dt) {
+        checkTouchpadInput(dt);
 
-        // handle mobile
-        if (Slit.IS_MOBILE) {
-            checkTouchpadInput(dt);
-        } else {
-//            checkKeyInput(dt);
-//            checkTouchpadInput(dt);
-
-        }
     }
 
     public void update(float dt) {
-        // handle input first
-        handleInput(dt);
+        // handle touch
+        if (Slit.IS_MOBILE) {
+            handleTouchInput(dt);
+        }
 
         mWorld.step(1 / 60f, 6, 2); // 60 Hz
 
@@ -280,7 +276,7 @@ public class PlayScreen extends GameScreen {
     }
 
 
-    public void dropBeacon(float x, float y) {
+    public void addBeacon(float x, float y) {
         Light beacon = new PointLight(mRayHandler, 10, mPlayerPulse.getColor(), playerLightDistance / 10, x, y);
         mBeaconSet.add(beacon);
         Gdx.app.log(TAG, "" + mBeaconSet.size());

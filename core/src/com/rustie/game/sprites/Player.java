@@ -1,5 +1,6 @@
 package com.rustie.game.sprites;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
@@ -18,6 +19,8 @@ import box2dLight.Light;
 
 public class Player extends Sprite {
 
+    public static final String TAG = "Player";
+
     public World mWorld;
     public Body mB2Body;
 
@@ -30,14 +33,14 @@ public class Player extends Sprite {
     public static float SLOW_SPEED = 0.5f;
 
     private Light mLight;
-    private PlayScreen mI;
+    private PlayScreen mPlayScreen;
 
-    public Player(World world, PlayScreen interactiveMenuScreen) {
+    public Player(World world, PlayScreen playScreen) {
         this.mWorld = world;
         definePlayer();
         this.mPosition = mB2Body.getPosition();
         this.mVelocity = mB2Body.getLinearVelocity();
-        mI = interactiveMenuScreen;
+        mPlayScreen = playScreen;
     }
 
     public void definePlayer() {
@@ -124,7 +127,22 @@ public class Player extends Sprite {
         return mVelocity.y;
     }
 
+    long lastDrop = 0;
+
     public void dropBeacon() {
-        mI.dropBeacon(getX(), getY());
+        if (lastDrop == 0) {
+            mPlayScreen.addBeacon(getX(), getY());
+            lastDrop = System.currentTimeMillis();
+        } else if (System.currentTimeMillis() - lastDrop > 100) {
+            mPlayScreen.addBeacon(getX(), getY());
+            lastDrop = System.currentTimeMillis();
+        } else {
+            Gdx.app.log(TAG, "droppin too fast");
+
+        }
+    }
+
+    public boolean isMoving() {
+        return mVelocity.x != 0 || mVelocity.y != 0;
     }
 }
