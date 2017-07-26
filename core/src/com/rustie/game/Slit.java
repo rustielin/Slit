@@ -3,12 +3,19 @@ package com.rustie.game;
 import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.rustie.game.screens.BlankScreen;
 import com.rustie.game.screens.GameScreenManager;
 import com.rustie.game.screens.PlayScreen;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+
 public class Slit extends Game {
+
+	public static final String TAG = "SLIT";
 
     // virtual width and heights
 	public static final int WIDTH = 720;
@@ -21,6 +28,7 @@ public class Slit extends Game {
 	public static final String TITLE = "Slit";
     public static Application.ApplicationType APP_TYPE;
 	public static boolean IS_MOBILE;
+	public String USERNAME;
 
 	// for filters, collisions, lighting, etc
 	public static final short DEFAULT_BIT = 1;
@@ -45,15 +53,24 @@ public class Slit extends Game {
         // debug
 //		Gdx.app.setLogLevel(Application.LOG_DEBUG);
 
+		try {
+			String computername= InetAddress.getLocalHost().getAddress().toString();
+			Gdx.app.log(TAG, computername );
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		}
+
 		APP_TYPE = Gdx.app.getType();
 		IS_MOBILE = APP_TYPE == Application.ApplicationType.Android ||
 				APP_TYPE == Application.ApplicationType.iOS;
 
-		this.mGsm = new GameScreenManager(this);
+		mGsm = new GameScreenManager(this);
 
-        // start on a menu screen
-//		this.mGsm.push(new MenuScreen(mGsm, this));
 		mGsm.push(new PlayScreen(mGsm, this, "level1.tmx"));
+		mGsm.push(new BlankScreen(mGsm));
+
+		NameInputListener n = new NameInputListener(this);
+		Gdx.input.getTextInput(n, "You need a username!!", "", "");
 
 		playMusic();
 	}
@@ -84,6 +101,31 @@ public class Slit extends Game {
 		music.setLooping(true);
 		music.play();
 
+	}
+
+
+	/**
+	 * Used for getting username at game launch
+	 */
+	class NameInputListener implements Input.TextInputListener {
+
+		Slit game;
+		public NameInputListener(Slit game) {
+			this.game = game;
+		}
+
+		@Override
+		public void input(String text) {
+			Gdx.app.log(TAG, text + " logged in");
+			game.USERNAME = text;
+			mGsm.pop();
+		}
+
+		@Override
+		public void canceled() {
+			NameInputListener n = new NameInputListener(game);
+			Gdx.input.getTextInput(n, "You need a username!!", "", "");
+		}
 	}
 
 

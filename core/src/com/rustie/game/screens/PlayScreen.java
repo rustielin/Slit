@@ -2,6 +2,7 @@ package com.rustie.game.screens;
 
 import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Net;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
@@ -17,17 +18,26 @@ import com.badlogic.gdx.utils.viewport.FillViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.rustie.game.Slit;
 import com.rustie.game.scenes.Hud;
+import com.rustie.game.utils.BeaconLight;
+import com.rustie.game.utils.BeaconSet;
 import com.rustie.game.sprites.Coin;
 import com.rustie.game.sprites.Player;
 import com.rustie.game.sprites.Wall;
+import com.rustie.game.utils.FirebaseThread;
 import com.rustie.game.utils.KeyInputProcessor;
 import com.rustie.game.utils.PulsatingLight;
 import com.rustie.game.utils.WorldContactListener;
 
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
 
 import box2dLight.Light;
-import box2dLight.PointLight;
 import box2dLight.RayHandler;
 
 /**
@@ -59,18 +69,20 @@ public class PlayScreen extends GameScreen {
     // lighting
     public RayHandler mRayHandler;
     private box2dLight.PointLight mPlayerLight;
-    private float playerLightDistance = 2;
-    private int playerLightDirection = 1;
     private PulsatingLight mPlayerPulse;
 
     // sweeping for updates and dispose
     private Array<Fixture> mFixtureArray;
-    private HashSet<Light> mBeaconSet;
+    private BeaconSet mBeaconSet;
+    private FirebaseThread mFirebaseThread;
+
+
 
 
     public PlayScreen(GameScreenManager gsm, Slit game, String level) {
         super(gsm);
         mTitle = new BitmapFont();
+        mTitle.getData().setScale(2f);
         mTitle.setColor(Color.WHITE);
 
         Gdx.app.log(TAG, "ENTER");
@@ -100,11 +112,12 @@ public class PlayScreen extends GameScreen {
         mPlayer = new Player(mWorld, this);
         mRayHandler = new RayHandler(mWorld);
         mRayHandler.setShadows(false);
-        mPlayerLight = new box2dLight.PointLight(mRayHandler, 100, Color.WHITE, playerLightDistance, 32 / Slit.PPM, 32 / Slit.PPM);
+        mPlayerLight = new box2dLight.PointLight(mRayHandler, 100, Color.WHITE,
+                mPlayer.getPlayerLightDistance(), 32 / Slit.PPM, 32 / Slit.PPM);
         mPlayerLight.setSoftnessLength(0f);
         mPlayerLight.attachToBody(mPlayer.mB2Body);
         mPlayerPulse = new PulsatingLight(mPlayerLight, 0, 2, 0.8f, 1, true);
-        mBeaconSet = new HashSet<Light>();
+        mBeaconSet = new BeaconSet();
 
         // create the world and inject to physics
 //        new B2WorldCreator(mWorld, mMap, mRayHandler);
@@ -114,6 +127,10 @@ public class PlayScreen extends GameScreen {
         if (!Slit.IS_MOBILE) {
             Gdx.input.setInputProcessor(new KeyInputProcessor(mPlayer));
         }
+
+        mFirebaseThread = new FirebaseThread(mGame, mBeaconSet, mRayHandler);
+        mFirebaseThread.start();
+
 
     }
 
@@ -160,8 +177,6 @@ public class PlayScreen extends GameScreen {
         // sweep dead stuff
 //        sweepDeadFixtures();
 
-        mRayHandler.update();
-
         mPlayerPulse.update(dt);
 
         //sweep all updates
@@ -196,8 +211,10 @@ public class PlayScreen extends GameScreen {
         box2DDebugRenderer.render(mWorld, mCam.combined);
 
         // correct projection
-        mRayHandler.setCombinedMatrix(mCam.combined);
-        mRayHandler.render();
+        if (mRayHandler != null) {
+            mRayHandler.setCombinedMatrix(mCam.combined);
+            mRayHandler.updateAndRender();
+        }
 
 
         // recognize where the camera is and only render that
@@ -213,6 +230,8 @@ public class PlayScreen extends GameScreen {
         mGame.mBatch.begin();
 
         // put textures
+        mTitle.draw(Slit.mBatch, "Slit", Slit.WIDTH / 2 + 50, Slit.HEIGHT / 2);
+
 
 
         // close
@@ -243,6 +262,7 @@ public class PlayScreen extends GameScreen {
 
     @Override
     public void dispose() {
+        mRayHandler.removeAll();
         mRayHandler.dispose();
 //        mMap.dispose();
 //        mRenderer.dispose();
@@ -250,12 +270,10 @@ public class PlayScreen extends GameScreen {
         box2DDebugRenderer.dispose();
         mHud.dispose();
 
-        // get rid of all lights
-        for (Light l : mBeaconSet) {
-            l.dispose();
-        }
         mPlayerPulse = null;
         mPlayerLight.dispose();
+
+        mTitle.dispose();
 
     }
 
@@ -277,8 +295,17 @@ public class PlayScreen extends GameScreen {
 
 
     public void addBeacon(float x, float y) {
-        Light beacon = new PointLight(mRayHandler, 10, mPlayerPulse.getColor(), playerLightDistance / 10, x, y);
+        BeaconLight beacon = new BeaconLight(mRayHandler, 10, mPlayerPulse.getColor(),
+                mPlayer.getPlayerLightDistance() / 10, x, y, System.currentTimeMillis());
+
         mBeaconSet.add(beacon);
         Gdx.app.log(TAG, "" + mBeaconSet.size());
+
+        // send it over to Firebase later
+        mFirebaseThread.sendLater(beacon);
+
     }
+
+
 }
+

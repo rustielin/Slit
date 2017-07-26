@@ -11,6 +11,8 @@ import com.badlogic.gdx.physics.box2d.World;
 import com.rustie.game.Slit;
 import com.rustie.game.screens.PlayScreen;
 
+import org.json.JSONException;
+
 import box2dLight.Light;
 
 /**
@@ -28,6 +30,7 @@ public class Player extends Sprite {
     private Vector2 mVelocity;
     private static final double ACC = 0.25;
     private static final double VMAX = 1;
+    private float playerLightDistance;
 
     public static float MOVEMENT_SPEED = 1f;
     public static float SLOW_SPEED = 0.5f;
@@ -41,6 +44,7 @@ public class Player extends Sprite {
         this.mPosition = mB2Body.getPosition();
         this.mVelocity = mB2Body.getLinearVelocity();
         mPlayScreen = playScreen;
+        playerLightDistance = 2;
     }
 
     public void definePlayer() {
@@ -144,5 +148,9 @@ public class Player extends Sprite {
 
     public boolean isMoving() {
         return mVelocity.x != 0 || mVelocity.y != 0;
+    }
+
+    public float getPlayerLightDistance() {
+        return playerLightDistance;
     }
 }
